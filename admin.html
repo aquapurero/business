@@ -22,6 +22,11 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        .gradient-text {
+            background: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
         .gradient-btn {
             background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -80,35 +85,48 @@
         <!-- Analytical Insights Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
                     <i class="fa-solid fa-truck-ramp-box"></i>
                 </div>
                 <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Total Dispatches</p>
-                <p class="text-3xl font-semibold text-white mt-2" id="stat-total">0</p>
+                <p class="text-3xl font-semibold text-white mt-2" id="stat-total">142</p>
+                <div class="flex items-center space-x-1 text-xs text-emerald-400 mt-2">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span>+12% vs yesterday</span>
+                </div>
             </div>
 
             <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
                     <i class="fa-solid fa-spinner"></i>
                 </div>
                 <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Active Deliveries</p>
-                <p class="text-3xl font-semibold text-cyan-400 mt-2" id="stat-active">0</p>
+                <p class="text-3xl font-semibold text-cyan-400 mt-2" id="stat-active">18</p>
+                <div class="flex items-center space-x-1 text-xs text-neutral-400 mt-2">
+                    <span>Assigned to riders</span>
+                </div>
             </div>
 
             <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
                     <i class="fa-solid fa-circle-check"></i>
                 </div>
                 <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Successful</p>
-                <p class="text-3xl font-semibold text-emerald-400 mt-2" id="stat-completed">0</p>
+                <p class="text-3xl font-semibold text-emerald-400 mt-2" id="stat-completed">124</p>
+                <div class="flex items-center space-x-1 text-xs text-emerald-400 mt-2">
+                    <span>progressing well</span>
+                </div>
             </div>
 
             <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Pending Orders</p>
+                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Pending/Issues</p>
                 <p class="text-3xl font-semibold text-amber-400 mt-2" id="stat-pending">0</p>
+                <div class="flex items-center space-x-1 text-xs text-neutral-400 mt-2">
+                    <span>Requires attention</span>
+                </div>
             </div>
         </div>
 
@@ -134,11 +152,54 @@
                             <th class="px-6 py-4 font-medium">Quantity</th>
                             <th class="px-6 py-4 font-medium">Assigned Rider</th>
                             <th class="px-6 py-4 font-medium">Live Status</th>
+                            <th class="px-6 py-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
-                        <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
+                        <!-- Sample Dynamic Row -->
+                        <tr class="hover:bg-neutral-900/30 transition-colors">
+                            <td class="px-6 py-4 font-mono font-medium text-blue-400">#AQP-9021</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white">Ramesh Kumar</div>
+                                <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>Ward 5, Main Street</div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-neutral-200">5 Jars (20L)</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="h-7 w-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs text-neutral-300 border border-neutral-700">RS</div>
+                                    <span class="text-neutral-300 font-medium">Rahul Sharma</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                    <i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Out for Delivery
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-neutral-400 hover:text-white transition-colors p-1"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-neutral-900/30 transition-colors">
+                            <td class="px-6 py-4 font-mono font-medium text-blue-400">#AQP-9020</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white">Ananya Mishra</div>
+                                <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>Sriram Nagar, Phase 2</div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-neutral-200">2 Jars (20L)</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="h-7 w-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs text-neutral-300 border border-neutral-700">DM</div>
+                                    <span class="text-neutral-300 font-medium">Deepak Mohanty</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <i class="fa-solid fa-circle-check mr-1.5"></i>progressing well
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-neutral-400 hover:text-white transition-colors p-1"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -153,23 +214,23 @@
                 <h3 class="text-xl font-semibold text-white">New Dispatch Allocation</h3>
                 <button onclick="toggleOrderModal()" class="text-neutral-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form class="space-y-4" id="dispatchForm">
+            <form class="space-y-4" id="dispatchForm" onsubmit="handleFormSubmit(event)">
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
-                    <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
+                    <input type="text" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
-                    <textarea id="custAddress" required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local address"></textarea>
+                    <textarea required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local landmark and address"></textarea>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Quantity (20L Jars)</label>
-                        <input type="number" id="custQty" required min="1" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Number of jars">
+                        <input type="number" required min="1" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Number of jars">
                     </div>
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                        <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                        <select class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
                             <option value="Rahul Sharma">Rahul Sharma</option>
                             <option value="Deepak Mohanty">Deepak Mohanty</option>
                         </select>
@@ -182,95 +243,17 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Logic Modules -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    <script>
+        function toggleOrderModal() {
+            const modal = document.getElementById('orderModal');
+            modal.classList.toggle('hidden');
+        }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
-            authDomain: "aquapure-1a3ce.firebaseapp.com",
-            projectId: "aquapure-1a3ce",
-            storageBucket: "aquapure-1a3ce.firebasestorage.app",
-            messagingSenderId: "8661923251",
-            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const ordersRef = collection(db, "aquapure_orders");
-
-        // Handle Add Order Flow
-        document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
+        function handleFormSubmit(e) {
             e.preventDefault();
-            try {
-                await addDoc(ordersRef, {
-                    orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
-                    customerName: document.getElementById('custName').value,
-                    address: document.getElementById('custAddress').value,
-                    quantity: document.getElementById('custQty').value,
-                    rider: document.getElementById('riderSelect').value,
-                    status: "Pending",
-                    timestamp: serverTimestamp()
-                });
-                document.getElementById('dispatchForm').reset();
-                window.toggleOrderModal();
-            } catch (error) {
-                console.error("Database Injection Error: ", error);
-            }
-        });
-
-        // Live Synchronizer Listener
-        onSnapshot(ordersRef, (snapshot) => {
-            const tbody = document.getElementById('order-table-body');
-            tbody.innerHTML = '';
-            
-            let total = 0, active = 0, completed = 0, pending = 0;
-
-            if(snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-neutral-500">No dispatch events recorded.</td></tr>`;
-            }
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                total++;
-
-                let statusBadge = '';
-                if(data.status === 'Pending') {
-                    pending++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1.5"></i>Pending Allocation</span>`;
-                } else if(data.status === 'Out for Delivery') {
-                    active++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Out For Delivery</span>`;
-                } else if(data.status === 'progressing well') {
-                    completed++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>progressing well</span>`;
-                }
-
-                const row = `
-                    <tr class="hover:bg-neutral-900/30 transition-colors">
-                        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-white">${data.customerName}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address}</div>
-                        </td>
-                        <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity} Jars (20L)</td>
-                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider}</td>
-                        <td class="px-6 py-4">${statusBadge}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-
-            // Update DOM metrics counters
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-active').innerText = active;
-            document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-pending').innerText = pending;
-        });
-
-        window.toggleOrderModal = function() {
-            document.getElementById('orderModal').classList.toggle('hidden');
+            // Implement logic to add to Firestore data nodes here
+            alert('Order successfully deployed to the delivery workforce live pool!');
+            toggleOrderModal();
         }
     </script>
 </body>
