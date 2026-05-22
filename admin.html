@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaPure Admin Pro</title>
-    <!-- Google Fonts & Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -44,7 +42,6 @@
 </head>
 <body class="min-h-screen custom-scrollbar">
 
-    <!-- Top Premium Navigation -->
     <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-800 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-3">
             <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -65,7 +62,6 @@
 
     <main class="max-w-7xl mx-auto p-6 space-y-8">
         
-        <!-- Welcome Hero Section -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Operations Dashboard</h1>
@@ -77,7 +73,6 @@
             </button>
         </div>
 
-        <!-- Analytical Insights Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
                 <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
@@ -112,28 +107,24 @@
             </div>
         </div>
 
-        <!-- Split Layout Panel: Rider Attendance & Operational Streams -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <!-- Rider Duty & Attendance Tracking Component -->
             <div class="lg:col-span-1 space-y-4">
                 <div class="apple-blur rounded-2xl p-5 space-y-4">
                     <div class="flex justify-between items-center pb-3 border-b border-neutral-800">
                         <div>
                             <h3 class="text-base font-semibold text-white">Rider Shift Activity</h3>
-                            <p class="text-xs text-neutral-400">Daily punch tracking timeline</p>
+                            <p class="text-xs text-neutral-400">Daily punch tracking & earnings</p>
                         </div>
                         <i class="fa-solid fa-user-clock text-neutral-500"></i>
                     </div>
                     
-                    <!-- Dynamic Attendance Target Layout Stack -->
-                    <div class="space-y-3.5" id="attendance-roster-stack">
+                    <div class="space-y-4" id="attendance-roster-stack">
                         <p class="text-sm text-neutral-500 text-center py-4">Checking active duty logs...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Master Operations Stream Table -->
             <div class="lg:col-span-2 apple-blur rounded-2xl overflow-hidden shadow-2xl h-fit">
                 <div class="px-6 py-5 border-b border-neutral-800 flex justify-between items-center flex-wrap gap-4">
                     <div>
@@ -155,11 +146,12 @@
                                 <th class="px-6 py-4 font-medium">Quantity</th>
                                 <th class="px-6 py-4 font-medium">Assigned Rider</th>
                                 <th class="px-6 py-4 font-medium">Live Status</th>
+                                <th class="px-6 py-4 font-medium text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
                             <tr>
-                                <td colspan="5" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
+                                <td colspan="6" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -168,7 +160,6 @@
         </div>
     </main>
 
-    <!-- Create Dispatch Order Modal -->
     <div id="orderModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
         <div class="apple-blur w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6">
             <div class="flex justify-between items-center">
@@ -204,10 +195,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK Logic Modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -223,8 +213,8 @@
         
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
+        const ridersRef = collection(db, "riders");
 
-        // System Date String signature tracker for accurate daily logs
         function getTodayString() {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -238,7 +228,7 @@
                     orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
                     customerName: document.getElementById('custName').value,
                     address: document.getElementById('custAddress').value,
-                    quantity: document.getElementById('custQty').value,
+                    quantity: parseInt(document.getElementById('custQty').value) || 0,
                     rider: document.getElementById('riderSelect').value,
                     status: "Pending",
                     timestamp: serverTimestamp()
@@ -250,37 +240,88 @@
             }
         });
 
-        // Live Attendance Activity Stream Monitor
+        // Globalized System Actions for Security Deletions and updates
+        window.deleteOrderRecord = async function(docId) {
+            if(confirm("Are you sure you want to delete this dispatch order permanently?")) {
+                try {
+                    await deleteDoc(doc(db, "aquapure_orders", docId));
+                } catch (error) {
+                    console.error("Deletion failure:", error);
+                }
+            }
+        };
+
+        window.triggerPasswordUpdate = async function(riderSlug) {
+            const newPassword = prompt(`Enter new application password for ${riderSlug.replace('_', ' ')}:`);
+            if (newPassword && newPassword.trim().length > 0) {
+                try {
+                    const profileRef = doc(db, "riders", riderSlug);
+                    await updateDoc(profileRef, {
+                        password: newPassword.trim()
+                    });
+                    alert("Rider authentication credential synchronized successfully.");
+                } catch (err) {
+                    console.error("Security write blocked:", err);
+                    alert("Failed to write password. Check Firestore security parameters.");
+                }
+            }
+        };
+
+        // Real-Time Matrix Listener merging Attendance with Wallet Balances
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
+        // Create secondary listeners to pull down continuous live rider metrics
+        let localRiderWallets = {};
+        onSnapshot(ridersRef, (walletSnapshot) => {
+            walletSnapshot.forEach((wDoc) => {
+                localRiderWallets[wDoc.id] = wDoc.data();
+            });
+            // Re-trigger visual layout building whenever wallet profiles modify
+            refreshRiderRosterLayout();
+        });
+
+        let currentAttendanceData = [];
         onSnapshot(attendanceQuery, (snapshot) => {
+            currentAttendanceData = [];
+            snapshot.forEach(docSnap => {
+                currentAttendanceData.push(docSnap.data());
+            });
+            refreshRiderRosterLayout();
+        });
+
+        function refreshRiderRosterLayout() {
             const rosterStack = document.getElementById('attendance-roster-stack');
+            if(!rosterStack) return;
             rosterStack.innerHTML = '';
 
-            // Map tracking lists of default operational agents
             const activeRidersInLogs = {};
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
+            currentAttendanceData.forEach(data => {
                 activeRidersInLogs[data.rider] = data;
             });
 
-            const targetAgents = ["Rahul Sharma", "Deepak Mohanty"];
+            const targetAgents = [
+                { name: "Rahul Sharma", slug: "Rahul_Sharma" },
+                { name: "Deepak Mohanty", slug: "Deepak_Mohanty" }
+            ];
 
-            targetAgents.forEach(agentName => {
-                const logData = activeRidersInLogs[agentName];
+            targetAgents.forEach(agent => {
+                const logData = activeRidersInLogs[agent.name];
+                const walletDoc = localRiderWallets[agent.slug] || {};
+                
+                let balanceAmount = walletDoc.walletBalance || 0;
+                if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
+
                 let statusBadge = '';
                 let dutyTimingText = '';
 
                 if (!logData) {
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-neutral-700 bg-neutral-900 text-neutral-400 font-medium">Off Duty</span>`;
-                    dutyTimingText = `
-                        <div class="text-neutral-500 text-xs">No attendance footprint logged today.</div>
-                    `;
+                    dutyTimingText = `<div class="text-neutral-500 text-xs">No shift footprint recorded today.</div>`;
                 } else if (logData.punchIn && !logData.punchOut) {
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-medium animate-pulse"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Active</span>`;
                     dutyTimingText = `
-                        <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+                        <div class="grid grid-cols-2 gap-2 text-xs">
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-emerald-400 font-mono">${logData.punchIn}</span></div>
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-neutral-600 font-mono">--:--</span></div>
                         </div>
@@ -288,74 +329,94 @@
                 } else if (logData.punchOut) {
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium">Completed</span>`;
                     dutyTimingText = `
-                        <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+                        <div class="grid grid-cols-2 gap-2 text-xs">
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-neutral-400 font-mono">${logData.punchIn}</span></div>
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-rose-400 font-mono">${logData.punchOut}</span></div>
                         </div>
                     `;
                 }
 
-                const agentInitial = agentName.split(' ').map(n => n[0]).join('');
+                const agentInitial = agent.name.split(' ').map(n => n[0]).join('');
 
                 const itemHtml = `
-                    <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-3.5 space-y-2.5">
+                    <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-4 space-y-3.5">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center space-x-2.5">
                                 <div class="h-7 w-7 rounded-full bg-neutral-800 text-xs flex items-center justify-center font-bold text-blue-400 border border-neutral-700">${agentInitial}</div>
-                                <span class="text-sm font-medium text-white">${agentName}</span>
+                                <span class="text-sm font-medium text-white">${agent.name}</span>
                             </div>
                             ${statusBadge}
                         </div>
+                        
                         ${dutyTimingText}
+
+                        <div class="pt-2 border-t border-neutral-800/60 flex items-center justify-between">
+                            <div class="flex items-center space-x-1.5">
+                                <i class="fa-solid fa-wallet text-neutral-500 text-xs"></i>
+                                <span class="text-xs text-neutral-400 font-medium">Wallet:</span>
+                                <span class="text-xs font-bold text-white font-mono">₹${Number(balanceAmount).toFixed(2)}</span>
+                            </div>
+                            <button onclick="window.triggerPasswordUpdate('${agent.slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors">
+                                <i class="fa-solid fa-key text-[10px]"></i>
+                                <span>Update Key</span>
+                            </button>
+                        </div>
                     </div>
                 `;
                 rosterStack.innerHTML += itemHtml;
             });
-        });
+        }
 
-        // Live Orders Synchronizer Listener
+        // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
             const tbody = document.getElementById('order-table-body');
+            if(!tbody) return;
             tbody.innerHTML = '';
             
             let total = 0, active = 0, completed = 0, pending = 0;
 
             if(snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-neutral-500">No dispatch events recorded.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-neutral-500">No active dispatches found.</td></tr>`;
             }
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
+                const docId = doc.id;
                 total++;
 
                 let statusBadge = '';
                 if(data.status === 'Pending') {
                     pending++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1.5"></i>Pending Allocation</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1.5"></i>Pending</span>`;
                 } else if(data.status === 'Out for Delivery') {
                     active++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Out For Delivery</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Transit</span>`;
                 } else if(data.status === 'progressing well') {
                     completed++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>progressing well</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>Delivered</span>`;
                 }
 
                 const row = `
                     <tr class="hover:bg-neutral-900/30 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
                         <td class="px-6 py-4">
-                            <div class="font-medium text-white">${data.customerName}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address}</div>
+                            <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
+                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address || 'No Address'}</div>
                         </td>
-                        <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity} Jars (20L)</td>
-                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider}</td>
+                        <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity || 0} Jars (20L)</td>
+                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
                         <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="window.deleteOrderRecord('${docId}')" class="text-neutral-500 hover:text-rose-400 p-1.5 transition-colors">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
                 tbody.innerHTML += row;
             });
 
-            // Update DOM metrics counters
+            // Update analytical telemetry widgets
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-active').innerText = active;
             document.getElementById('stat-completed').innerText = completed;
@@ -364,7 +425,7 @@
 
         window.toggleOrderModal = function() {
             document.getElementById('orderModal').classList.toggle('hidden');
-        }
+        };
     </script>
 </body>
 </html>
