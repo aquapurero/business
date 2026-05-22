@@ -11,128 +11,161 @@
     <style>
         body {
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0b0c10;
+            background-color: #050505;
             color: #f5f5f7;
         }
         .apple-card {
-            background: rgba(28, 28, 30, 0.7);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: linear-gradient(145deg, rgba(22, 22, 26, 0.7) 0%, rgba(14, 14, 16, 0.8) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
         .ios-action-btn {
-            background: #0071e3;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .ios-action-btn:active {
-            transform: scale(0.96);
-            background: #005bb5;
+            transform: scale(0.95);
+            filter: brightness(0.9);
+        }
+        .pulse-border-active {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            animation: pulse-emerald 2s infinite;
+        }
+        @keyframes pulse-emerald {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
     </style>
 </head>
-<body class="min-h-screen pb-12 select-none">
+<body class="min-h-screen pb-24 select-none bg-neutral-950">
 
-    <header class="sticky top-0 z-50 bg-[#0b0c10]/80 backdrop-blur-md border-b border-neutral-900 px-5 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-2.5">
-            <div class="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
-                <i class="fa-solid fa-droplet text-sm"></i>
+    <header class="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-neutral-900/80 px-5 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-droplet text-base animate-pulse"></i>
             </div>
-            <h1 class="text-lg font-semibold tracking-tight text-white">AquaPure <span class="text-xs text-neutral-400 font-normal">Rider Port</span></h1>
+            <div>
+                <h1 class="text-sm font-bold tracking-tight text-white leading-none">AquaPure Live</h1>
+                <span class="text-[10px] text-neutral-400 font-medium tracking-widest uppercase">Rider Port</span>
+            </div>
         </div>
         <div class="flex items-center space-x-2">
-            <span id="status-ping" class="h-2 w-2 rounded-full bg-neutral-500"></span>
-            <span id="status-badge" class="text-xs font-medium text-neutral-400 tracking-wide bg-neutral-500/10 px-2 py-0.5 rounded-full border border-neutral-500/20">Offline</span>
+            <span id="status-ping" class="h-2 w-2 rounded-full bg-neutral-600"></span>
+            <span id="status-badge" class="text-[11px] font-semibold text-neutral-400 tracking-wide bg-neutral-800/60 px-2.5 py-0.5 rounded-full border border-neutral-700/50">Offline</span>
         </div>
     </header>
 
-    <main class="max-w-md mx-auto p-4 space-y-5">
+    <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <div class="apple-card p-4 rounded-2xl space-y-4">
+        <div class="apple-card p-5 rounded-2xl space-y-4 relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="h-12 w-12 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-blue-400 text-lg font-semibold">
+                <div class="flex items-center space-x-4">
+                    <div id="avatar-ring" class="h-14 w-14 rounded-full bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center text-cyan-400 text-lg font-bold shadow-inner relative">
                         RS
+                        <div id="avatar-dot" class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-neutral-600 border-2 border-neutral-950"></div>
                     </div>
                     <div>
-                        <h2 class="text-base font-semibold text-white">Rahul Sharma</h2>
-                        <p class="text-xs text-neutral-400">Rider ID: #FF992</p>
+                        <h2 class="text-lg font-bold text-white tracking-tight">Rahul Sharma</h2>
+                        <p class="text-xs font-mono text-neutral-400">ID: #FF992</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <span class="text-xs text-neutral-400 uppercase tracking-wider block">Remaining</span>
-                    <span class="text-xl font-bold text-white" id="pending-count">0 Tasks</span>
+                    <span class="text-[10px] text-neutral-500 uppercase tracking-widest block font-medium">Pending Tasks</span>
+                    <span class="text-2xl font-black text-white tracking-tight" id="pending-count">0</span>
                 </div>
             </div>
 
-            <div class="bg-gradient-to-r from-blue-500/10 to-cyan-500/5 border border-blue-500/15 rounded-xl p-3 flex justify-between items-center">
-                <div class="flex items-center space-x-2.5">
-                    <div class="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
+            <div class="bg-neutral-900/50 border border-neutral-800/60 rounded-xl p-3.5 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-neutral-800 to-neutral-900 flex items-center justify-center text-blue-400 border border-neutral-700/40">
                         <i class="fa-solid fa-wallet text-sm"></i>
                     </div>
                     <div>
-                        <span class="text-[11px] text-neutral-400 uppercase tracking-wider block">Earnings Balance</span>
+                        <span class="text-[10px] text-neutral-500 uppercase tracking-wider block font-medium">Current Session Wallet</span>
                         <div class="flex items-baseline space-x-0.5">
-                            <span class="text-xs font-medium text-blue-400">₹</span>
-                            <span id="wallet-display" class="text-lg font-bold text-white tracking-tight">0.00</span>
+                            <span class="text-xs font-semibold text-blue-400">₹</span>
+                            <span id="wallet-display" class="text-xl font-bold text-white tracking-tight font-mono">0.00</span>
                         </div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <span class="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 uppercase font-medium tracking-wide">Secured</span>
+                <div class="h-2 w-2 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div class="apple-card p-3.5 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] text-neutral-500 uppercase tracking-wider block font-medium">Duty Clock</span>
+                    <span id="shift-time-display" class="text-xs font-bold text-white font-mono mt-0.5 block">--:--</span>
                 </div>
+                <i class="fa-solid fa-business-time text-neutral-700 text-sm"></i>
+            </div>
+            <div class="apple-card p-3.5 rounded-xl flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] text-neutral-500 uppercase tracking-wider block font-medium">Job Status</span>
+                    <span id="metrics-delivered" class="text-xs font-bold text-neutral-400 mt-0.5 block">0 Done</span>
+                </div>
+                <i class="fa-solid fa-circle-check text-neutral-700 text-sm"></i>
             </div>
         </div>
 
         <div class="apple-card p-4 rounded-2xl space-y-3">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Shift Management</span>
-                <span id="shift-time-display" class="text-xs text-neutral-400 font-mono">--:--</span>
-            </div>
             <div class="flex gap-3">
-                <button id="punch-in-btn" class="w-1/2 bg-emerald-600 active:bg-emerald-700 text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 transition-all disabled:opacity-40 disabled:pointer-events-none">
-                    <i class="fa-solid fa-right-to-bracket"></i>
+                <button id="punch-in-btn" class="w-1/2 bg-gradient-to-r from-emerald-600 to-teal-600 active:scale-95 text-white font-semibold text-sm py-3.5 rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-emerald-900/20 disabled:opacity-30 disabled:pointer-events-none">
+                    <i class="fa-solid fa-right-to-bracket text-xs"></i>
                     <span>Punch In</span>
                 </button>
-                <button id="punch-out-btn" class="w-1/2 bg-rose-600 active:bg-rose-700 text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 transition-all disabled:opacity-40 disabled:pointer-events-none" disabled>
-                    <i class="fa-solid fa-right-from-bracket"></i>
+                <button id="punch-out-btn" class="w-1/2 bg-gradient-to-r from-rose-600 to-red-600 active:scale-95 text-white font-semibold text-sm py-3.5 rounded-xl flex items-center justify-center space-x-2 transition-all shadow-lg shadow-rose-900/20 disabled:opacity-30 disabled:pointer-events-none" disabled>
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
                     <span>Punch Out</span>
                 </button>
             </div>
         </div>
 
-        <div id="pipeline-view" class="space-y-4 hidden">
-            <div class="flex items-center justify-between px-1">
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Task Pipeline</h3>
-                <span class="text-xs text-blue-400 font-medium">Real-time</span>
+        <div id="pipeline-view" class="space-y-3 hidden">
+            <div class="flex items-center justify-between px-1 pt-1">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-neutral-500">Current Task Pipeline</h3>
+                <div class="flex items-center space-x-1.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Live Sync</span>
+                </div>
             </div>
 
-            <div class="space-y-4" id="task-container">
+            <div class="space-y-3.5" id="task-container">
                 <p class="text-center text-neutral-500 py-6 text-sm">Fetching active dispatches...</p>
             </div>
         </div>
 
-        <div id="offline-placeholder" class="apple-card p-8 rounded-2xl text-center space-y-2">
-            <i class="fa-solid fa-mug-hot text-3xl text-neutral-600"></i>
-            <h4 class="text-sm font-medium text-neutral-400">You are currently off-duty</h4>
-            <p class="text-xs text-neutral-500 max-w-xs mx-auto">Punch in above to begin receiving live dispatches and route information.</p>
+        <div id="offline-placeholder" class="apple-card p-8 rounded-2xl text-center space-y-3 border border-dashed border-neutral-800">
+            <div class="h-12 w-12 rounded-full bg-neutral-900/80 flex items-center justify-center mx-auto text-neutral-600 border border-neutral-800">
+                <i class="fa-solid fa-mug-hot text-xl"></i>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold text-neutral-300">You are currently off-duty</h4>
+                <p class="text-xs text-neutral-500 max-w-xs mx-auto mt-1 leading-relaxed">Punch in above to establish a secure database link, claim your deployment allowance, and look up real-time routes.</p>
+            </div>
         </div>
 
     </main>
 
-    <div class="fixed bottom-0 inset-x-0 bg-[#0b0c10]/80 backdrop-blur-lg border-t border-neutral-900 py-2.5 flex justify-around items-center max-w-md mx-auto">
-        <button class="flex flex-col items-center space-y-0.5 text-blue-500">
-            <i class="fa-solid fa-route text-lg"></i>
-            <span class="text-[10px] font-medium">Deliveries</span>
+    <div class="fixed bottom-0 inset-x-0 bg-black/60 backdrop-blur-xl border-t border-neutral-900/60 py-3 flex justify-around items-center max-w-md mx-auto z-50">
+        <button class="flex flex-col items-center space-y-1 text-blue-400 transition-colors">
+            <i class="fa-solid fa-route text-xl"></i>
+            <span class="text-[10px] font-semibold tracking-wide">Deliveries</span>
         </button>
-        <button class="flex flex-col items-center space-y-0.5 text-neutral-500">
-            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-            <span class="text-[10px] font-medium">Logs</span>
+        <button class="flex flex-col items-center space-y-1 text-neutral-600 hover:text-neutral-400 transition-colors">
+            <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+            <span class="text-[10px] font-semibold tracking-wide">Logs</span>
         </button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, setDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -148,6 +181,7 @@
         
         const currentRider = "Rahul Sharma"; 
         const riderDocSlug = "Rahul_Sharma"; 
+        const RATE_PER_JAR = 30; // Global pricing rate parameter
         let unsubscribeTasks = null;
         let unsubscribeWallet = null;
 
@@ -159,6 +193,8 @@
         const statusBadge = document.getElementById('status-badge');
         const shiftTimeDisplay = document.getElementById('shift-time-display');
         const walletDisplay = document.getElementById('wallet-display');
+        const avatarRing = document.getElementById('avatar-ring');
+        const avatarDot = document.getElementById('avatar-dot');
 
         function getTodayString() {
             const d = new Date();
@@ -217,9 +253,12 @@
             offlinePlaceholder.classList.add('hidden');
             
             statusPing.className = "h-2 w-2 rounded-full bg-emerald-500 animate-ping";
-            statusBadge.className = "text-xs font-medium text-emerald-400 tracking-wide bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20";
+            statusBadge.className = "text-[11px] font-bold text-emerald-400 tracking-wide bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20";
             statusBadge.innerText = "Online";
             shiftTimeDisplay.innerText = `In: ${punchInTime}`;
+
+            avatarRing.className = "h-14 w-14 rounded-full bg-neutral-900 border-2 border-emerald-500 flex items-center justify-center text-cyan-400 text-lg font-bold shadow-inner relative pulse-border-active";
+            avatarDot.className = "absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-neutral-950";
         }
 
         function setUIOffline(punchInTime = null, punchOutTime = null) {
@@ -228,12 +267,15 @@
             pipelineView.classList.add('hidden');
             offlinePlaceholder.classList.remove('hidden');
             
-            statusPing.className = "h-2 w-2 rounded-full bg-neutral-500";
-            statusBadge.className = "text-xs font-medium text-neutral-400 tracking-wide bg-neutral-500/10 px-2 py-0.5 rounded-full border border-neutral-500/20";
+            statusPing.className = "h-2 w-2 rounded-full bg-neutral-600";
+            statusBadge.className = "text-[11px] font-bold text-neutral-400 tracking-wide bg-neutral-800/60 px-2.5 py-0.5 rounded-full border border-neutral-700/50";
             statusBadge.innerText = "Offline";
             
+            avatarRing.className = "h-14 w-14 rounded-full bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center text-neutral-500 text-lg font-bold shadow-inner relative";
+            avatarDot.className = "absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-neutral-600 border-2 border-neutral-950";
+
             if (punchInTime && punchOutTime) {
-                shiftTimeDisplay.innerText = `Shift Finished`;
+                shiftTimeDisplay.innerText = `Shift Done`;
             } else {
                 shiftTimeDisplay.innerText = `--:--`;
             }
@@ -306,10 +348,12 @@
                 const container = document.getElementById('task-container');
                 container.innerHTML = '';
                 let activeTasks = 0;
+                let finishedTasks = 0;
 
                 if(snapshot.empty) {
-                    container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-sm">No dispatches allocated for you today.</p>`;
-                    document.getElementById('pending-count').innerText = "0 Tasks";
+                    container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-xs font-medium">No dispatches allocated for you today.</p>`;
+                    document.getElementById('pending-count').innerText = "0";
+                    document.getElementById('metrics-delivered').innerText = "0 Done";
                     return;
                 }
 
@@ -317,62 +361,79 @@
                     const data = docSnap.data();
                     const docId = docSnap.id;
                     const phoneNum = data.mobileNumber || '';
+                    
+                    const jarQty = parseInt(data.quantity) || 0;
+                    const totalBillAmount = jarQty * RATE_PER_JAR;
 
                     if (data.status !== 'progressing well') {
                         activeTasks++;
+                    } else {
+                        finishedTasks++;
                     }
 
                     let operationalLayout = '';
                     if (data.status === 'Pending' || data.status === 'Out for Delivery') {
                         operationalLayout = `
-                            <div class="border-t border-neutral-800/60 pt-4 flex gap-2">
-                                <a href="tel:${phoneNum}" class="w-1/4 bg-blue-600/20 border border-blue-500/30 text-blue-400 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1">
-                                    <i class="fa-solid fa-phone text-xs"></i>
+                            <div class="border-t border-neutral-800/60 pt-3.5 flex gap-2">
+                                <a href="tel:${phoneNum}" class="w-1/4 bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-xs py-3 rounded-xl flex items-center justify-center space-x-1 active:bg-neutral-800">
+                                    <i class="fa-solid fa-phone text-blue-400"></i>
                                     <span>Call</span>
                                 </a>
-                                <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/4 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1 border border-neutral-700/60">
-                                    <i class="fa-solid fa-map-location-dot text-xs"></i>
-                                    <span>Maps</span>
+                                <button onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(data.address)}', '_blank')" class="w-1/4 bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-xs py-3 rounded-xl flex items-center justify-center space-x-1 active:bg-neutral-800">
+                                    <i class="fa-solid fa-location-arrow text-cyan-400"></i>
+                                    <span>Route</span>
                                 </button>
-                                <button onclick="window.updateDeliveryStatus('${docId}', this)" class="w-2/4 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1 shadow-lg">
-                                    <i class="fa-solid fa-circle-check text-xs"></i>
-                                    <span>Done</span>
+                                <button onclick="window.updateDeliveryStatus('${docId}', this)" class="w-2/4 ios-action-btn text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center space-x-1 shadow-lg shadow-blue-900/10">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Mark Done</span>
                                 </button>
                             </div>
                         `;
                     } else {
                         operationalLayout = `
-                            <div class="w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>progressing well</span>
+                            <div class="w-full bg-emerald-500/5 text-emerald-400 text-xs py-3 rounded-xl border border-emerald-500/10 font-bold flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-circle-check text-xs"></i>
+                                <span class="tracking-wide uppercase text-[10px]">progressing well</span>
                             </div>
                         `;
                     }
 
                     const cardHtml = `
-                        <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1.5 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-blue-500'}"></div>
+                        <div class="apple-card rounded-2xl p-4 space-y-3.5 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-gradient-to-b from-cyan-400 to-blue-500'}"></div>
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <span class="text-[11px] font-semibold tracking-wider uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-blue-400 bg-blue-400/10 border-blue-500/20'} px-2 py-0.5 rounded border">
-                                        ${data.status === 'progressing well' ? 'Completed' : 'Active Route'}
+                                    <span class="text-[9px] font-bold tracking-widest uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20'} px-2 py-0.5 rounded-md border">
+                                        ${data.status === 'progressing well' ? 'Completed' : 'Pending Job'}
                                     </span>
-                                    <h4 class="text-lg font-bold text-white mt-2">${data.customerName}</h4>
+                                    <h4 class="text-base font-bold text-white mt-2.5 tracking-tight">${data.customerName}</h4>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-sm font-bold text-neutral-200">${data.quantity} Jars</p>
-                                    <p class="text-[11px] text-neutral-400">ID: #${data.orderId}</p>
+                                    <p class="text-sm font-black text-neutral-200">${jarQty} Jars</p>
+                                    <p class="text-[10px] font-mono text-neutral-500 mt-0.5">#${data.orderId || 'N/A'}</p>
                                 </div>
                             </div>
-                            <div class="space-y-2.5 pt-1 text-sm">
+                            
+                            <div class="bg-black/40 border border-neutral-900/60 rounded-xl p-3 flex justify-between items-center text-xs">
+                                <div class="text-neutral-400">
+                                    <span class="text-[10px] uppercase text-neutral-500 font-medium block">Rate Calculation</span>
+                                    <span>₹${RATE_PER_JAR} × ${jarQty} Jars</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase text-neutral-500 font-medium block">Total Charge</span>
+                                    <span class="font-bold text-emerald-400 text-sm font-mono">₹${totalBillAmount}</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 text-xs border-t border-neutral-900 pt-3">
                                 ${phoneNum ? `
                                 <div class="flex items-center space-x-2.5 text-neutral-400">
-                                    <i class="fa-solid fa-phone text-neutral-500 w-4 text-center text-xs"></i>
-                                    <span>${phoneNum}</span>
+                                    <i class="fa-solid fa-phone text-neutral-600 w-3.5 text-center"></i>
+                                    <span class="font-mono">${phoneNum}</span>
                                 </div>` : ''}
                                 <div class="flex items-start space-x-2.5">
-                                    <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
-                                    <span class="text-neutral-300">${data.address}</span>
+                                    <i class="fa-solid fa-location-dot text-neutral-600 mt-0.5 w-3.5 text-center"></i>
+                                    <span class="text-neutral-300 leading-normal">${data.address}</span>
                                 </div>
                             </div>
                             ${operationalLayout}
@@ -381,12 +442,14 @@
                     container.innerHTML += cardHtml;
                 });
 
-                document.getElementById('pending-count').innerText = `${activeTasks} Tasks`;
+                document.getElementById('pending-count').innerText = activeTasks;
+                document.getElementById('metrics-delivered').innerText = `${finishedTasks} Done`;
             });
         }
 
         window.updateDeliveryStatus = async function(docId, buttonElement) {
-            buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i>`;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin text-xs"></i>`;
             try {
                 const docRef = doc(db, "aquapure_orders", docId);
                 await updateDoc(docRef, {
@@ -394,6 +457,7 @@
                 });
             } catch (error) {
                 console.error("Status sync failed:", error);
+                buttonElement.disabled = false;
                 buttonElement.innerHTML = `<span>Retry</span>`;
             }
         };
