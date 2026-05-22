@@ -112,36 +112,58 @@
             </div>
         </div>
 
-        <!-- Master Operations Table -->
-        <div class="apple-blur rounded-2xl overflow-hidden shadow-2xl">
-            <div class="px-6 py-5 border-b border-neutral-800 flex justify-between items-center flex-wrap gap-4">
-                <div>
-                    <h3 class="text-lg font-semibold text-white">Live Operations Stream</h3>
-                    <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-xs font-medium tracking-wide text-neutral-400 uppercase">Live Monitor</span>
+        <!-- Split Layout Panel: Rider Attendance & Operational Streams -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Rider Duty & Attendance Tracking Component -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="apple-blur rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-neutral-800">
+                        <div>
+                            <h3 class="text-base font-semibold text-white">Rider Shift Activity</h3>
+                            <p class="text-xs text-neutral-400">Daily punch tracking timeline</p>
+                        </div>
+                        <i class="fa-solid fa-user-clock text-neutral-500"></i>
+                    </div>
+                    
+                    <!-- Dynamic Attendance Target Layout Stack -->
+                    <div class="space-y-3.5" id="attendance-roster-stack">
+                        <p class="text-sm text-neutral-500 text-center py-4">Checking active duty logs...</p>
+                    </div>
                 </div>
             </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
-                            <th class="px-6 py-4 font-medium">Order ID</th>
-                            <th class="px-6 py-4 font-medium">Customer Details</th>
-                            <th class="px-6 py-4 font-medium">Quantity</th>
-                            <th class="px-6 py-4 font-medium">Assigned Rider</th>
-                            <th class="px-6 py-4 font-medium">Live Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
-                        <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Master Operations Stream Table -->
+            <div class="lg:col-span-2 apple-blur rounded-2xl overflow-hidden shadow-2xl h-fit">
+                <div class="px-6 py-5 border-b border-neutral-800 flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Live Operations Stream</h3>
+                        <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-xs font-medium tracking-wide text-neutral-400 uppercase">Live Monitor</span>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
+                                <th class="px-6 py-4 font-medium">Order ID</th>
+                                <th class="px-6 py-4 font-medium">Customer Details</th>
+                                <th class="px-6 py-4 font-medium">Quantity</th>
+                                <th class="px-6 py-4 font-medium">Assigned Rider</th>
+                                <th class="px-6 py-4 font-medium">Live Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
+                            <tr>
+                                <td colspan="5" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>
@@ -185,7 +207,7 @@
     <!-- Firebase SDK Logic Modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -198,7 +220,15 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
         const ordersRef = collection(db, "aquapure_orders");
+        const attendanceRef = collection(db, "rider_attendance");
+
+        // System Date String signature tracker for accurate daily logs
+        function getTodayString() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
 
         // Handle Add Order Flow
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
@@ -220,7 +250,70 @@
             }
         });
 
-        // Live Synchronizer Listener
+        // Live Attendance Activity Stream Monitor
+        const todayStr = getTodayString();
+        const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
+
+        onSnapshot(attendanceQuery, (snapshot) => {
+            const rosterStack = document.getElementById('attendance-roster-stack');
+            rosterStack.innerHTML = '';
+
+            // Map tracking lists of default operational agents
+            const activeRidersInLogs = {};
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                activeRidersInLogs[data.rider] = data;
+            });
+
+            const targetAgents = ["Rahul Sharma", "Deepak Mohanty"];
+
+            targetAgents.forEach(agentName => {
+                const logData = activeRidersInLogs[agentName];
+                let statusBadge = '';
+                let dutyTimingText = '';
+
+                if (!logData) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-neutral-700 bg-neutral-900 text-neutral-400 font-medium">Off Duty</span>`;
+                    dutyTimingText = `
+                        <div class="text-neutral-500 text-xs">No attendance footprint logged today.</div>
+                    `;
+                } else if (logData.punchIn && !logData.punchOut) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-medium animate-pulse"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Active</span>`;
+                    dutyTimingText = `
+                        <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-emerald-400 font-mono">${logData.punchIn}</span></div>
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-neutral-600 font-mono">--:--</span></div>
+                        </div>
+                    `;
+                } else if (logData.punchOut) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium">Completed</span>`;
+                    dutyTimingText = `
+                        <div class="grid grid-cols-2 gap-2 mt-1 text-xs">
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-neutral-400 font-mono">${logData.punchIn}</span></div>
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-rose-400 font-mono">${logData.punchOut}</span></div>
+                        </div>
+                    `;
+                }
+
+                const agentInitial = agentName.split(' ').map(n => n[0]).join('');
+
+                const itemHtml = `
+                    <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-3.5 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="h-7 w-7 rounded-full bg-neutral-800 text-xs flex items-center justify-center font-bold text-blue-400 border border-neutral-700">${agentInitial}</div>
+                                <span class="text-sm font-medium text-white">${agentName}</span>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        ${dutyTimingText}
+                    </div>
+                `;
+                rosterStack.innerHTML += itemHtml;
+            });
+        });
+
+        // Live Orders Synchronizer Listener
         onSnapshot(ordersRef, (snapshot) => {
             const tbody = document.getElementById('order-table-body');
             tbody.innerHTML = '';
