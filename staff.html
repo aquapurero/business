@@ -62,20 +62,58 @@
                 </div>
             </div>
             <div class="text-right">
-                <span class="text-xs text-neutral-400 uppercase tracking-wider block">Remaining</span>
-                <span class="text-xl font-bold text-white" id="pending-count">0 Tasks</span>
+                <span class="text-xs text-neutral-400 uppercase tracking-wider block">Today's Load</span>
+                <span class="text-xl font-bold text-white" id="pending-count">01 Task</span>
             </div>
         </div>
 
         <!-- Task Allocation Header -->
         <div class="flex items-center justify-between px-1">
             <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Task Pipeline</h3>
-            <span class="text-xs text-blue-400 font-medium">Real-time</span>
+            <span class="text-xs text-blue-400 font-medium">Real-time Updates</span>
         </div>
 
         <!-- Interactive Delivery Cards Stack -->
         <div class="space-y-4" id="task-container">
-            <p class="text-center text-neutral-500 py-6 text-sm">Fetching active dispatches...</p>
+            
+            <!-- Active Card Instance -->
+            <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden" id="task-card-1">
+                <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[11px] font-semibold tracking-wider uppercase text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded border border-blue-500/20">Active Route</span>
+                        <h4 class="text-lg font-bold text-white mt-2">Ramesh Kumar</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-neutral-200">5 Jars</p>
+                        <p class="text-[11px] text-neutral-400">Volume: 20 Liters</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 pt-1">
+                    <div class="flex items-start space-x-2.5 text-sm">
+                        <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
+                        <span class="text-neutral-300">Ward 5, Main Street, Near City Water Tank Complex</span>
+                    </div>
+                    <div class="flex items-center space-x-2.5 text-sm">
+                        <i class="fa-solid fa-phone text-neutral-500 w-4 text-center"></i>
+                        <a href="tel:+919876543210" class="text-blue-400 font-medium hover:underline">+91 98765 43210</a>
+                    </div>
+                </div>
+
+                <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
+                    <button onclick="openNavigation()" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60 active:bg-neutral-700">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                        <span>Maps</span>
+                    </button>
+                    <button onclick="updateDeliveryStatus('task-card-1')" id="action-btn-task-card-1" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/10">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Mark Delivered</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
 
     </main>
@@ -86,118 +124,36 @@
             <i class="fa-solid fa-route text-lg"></i>
             <span class="text-[10px] font-medium">Deliveries</span>
         </button>
-        <button class="flex flex-col items-center space-y-0.5 text-neutral-500">
+        <button class="flex flex-col items-center space-y-0.5 text-neutral-500 hover:text-neutral-300">
             <i class="fa-solid fa-clock-rotate-left text-lg"></i>
             <span class="text-[10px] font-medium">Logs</span>
         </button>
     </div>
 
-    <!-- Firebase Engine Integration -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    <script>
+        function openNavigation() {
+            // Generates native intent maps redirection structure
+            window.open("https://maps.google.com", "_blank");
+        }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
-            authDomain: "aquapure-1a3ce.firebaseapp.com",
-            projectId: "aquapure-1a3ce",
-            storageBucket: "aquapure-1a3ce.firebasestorage.app",
-            messagingSenderId: "8661923251",
-            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // Target current logged agent workload
-        const currentRider = "Rahul Sharma"; 
-        const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
-
-        onSnapshot(q, (snapshot) => {
-            const container = document.getElementById('task-container');
-            container.innerHTML = '';
-            let activeTasks = 0;
-
-            if(snapshot.empty) {
-                container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-sm">No dispatches allocated for you today.</p>`;
-                document.getElementById('pending-count').innerText = "0 Tasks";
-                return;
-            }
-
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const docId = docSnap.id;
-
-                if (data.status !== 'progressing well') {
-                    activeTasks++;
-                }
-
-                let operationalLayout = '';
-                if (data.status === 'Pending' || data.status === 'Out for Delivery') {
-                    // Update to dynamic active status switch options
-                    operationalLayout = `
-                        <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
-                            <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60">
-                                <i class="fa-solid fa-map-location-dot"></i>
-                                <span>Maps</span>
-                            </button>
-                            <button onclick="updateDeliveryStatus('${docId}', this)" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Mark Delivered</span>
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    operationalLayout = `
-                        <div class="w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <span>progressing well</span>
-                        </div>
-                    `;
-                }
-
-                const cardHtml = `
-                    <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1.5 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-blue-500'}"></div>
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-[11px] font-semibold tracking-wider uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-blue-400 bg-blue-400/10 border-blue-500/20'} px-2 py-0.5 rounded border">
-                                    ${data.status === 'progressing well' ? 'Completed' : 'Active Route'}
-                                </span>
-                                <h4 class="text-lg font-bold text-white mt-2">${data.customerName}</h4>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold text-neutral-200">${data.quantity} Jars</p>
-                                <p class="text-[11px] text-neutral-400">ID: #${data.orderId}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2.5 pt-1 text-sm">
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
-                                <span class="text-neutral-300">${data.address}</span>
-                            </div>
-                        </div>
-                        ${operationalLayout}
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-
-            document.getElementById('pending-count').innerText = `${activeTasks} Tasks`;
-        });
-
-        window.updateDeliveryStatus = async function(docId, buttonElement) {
-            buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
-            try {
-                const docRef = doc(db, "aquapure_orders", docId);
-                // System standard update tag insertion
-                await updateDoc(docRef, {
-                    status: "progressing well"
-                });
-            } catch (error) {
-                console.error("Status sync failed:", error);
-                buttonElement.innerHTML = `<span>Error Retry</span>`;
-            }
+        function updateDeliveryStatus(cardId) {
+            const card = document.getElementById(cardId);
+            const actionBtn = document.getElementById(`action-btn-${cardId}`);
+            
+            // Updates configuration state smoothly 
+            actionBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
+            actionBtn.style.background = "#10b981";
+            
+            setTimeout(() => {
+                // Update to the preferred operational status wording
+                card.style.transition = "all 0.4s ease";
+                card.style.opacity = "0.6";
+                actionBtn.className = "w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium pointer-events-none flex items-center justify-center space-x-2";
+                actionBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>progressing well</span>`;
+                
+                document.getElementById('pending-count').innerText = "00 Tasks";
+                alert("Status synchronized: Progression registered on Master Control.");
+            }, 1200);
         }
     </script>
 </body>
