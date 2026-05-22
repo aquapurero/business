@@ -3,189 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaPure Admin Pro</title>
-    <!-- Google Fonts & Tailwind CSS -->
+    <title>AquaPure Admin - Master Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #000000;
-            color: #f5f5f7;
-        }
-        .apple-blur {
-            background: rgba(22, 22, 23, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .gradient-btn {
-            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .gradient-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(0, 114, 255, 0.4);
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
+        body { font-family: 'SF Pro Display', sans-serif; background-color: #000; color: #f5f5f7; }
+        .apple-blur { background: rgba(22, 22, 23, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .gradient-card { background: linear-gradient(145deg, #1e1e1f 0%, #121214 100%); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .tab-active { background: #0071e3; color: white; }
     </style>
 </head>
-<body class="min-h-screen custom-scrollbar">
+<body class="min-h-screen pb-12">
 
-    <!-- Top Premium Navigation -->
+    <!-- Top Bar -->
     <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-800 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <i class="fa-solid fa-droplet text-white text-lg"></i>
-            </div>
-            <span class="text-xl font-semibold tracking-tight text-white">AquaPure <span class="text-xs font-medium uppercase tracking-widest text-neutral-400 ml-1">Admin</span></span>
+            <span class="text-xl font-bold text-white"><i class="fa-solid fa-droplet text-blue-500 mr-2"></i>AquaPure Admin Pro</span>
         </div>
-        <div class="flex items-center space-x-4">
-            <div class="text-right hidden md:block">
-                <p class="text-sm font-medium text-white">Control Center</p>
-                <p class="text-xs text-neutral-400">Live Syncing Enabled</p>
-            </div>
-            <div class="h-10 w-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-blue-400">
-                <i class="fa-solid fa-user-shield"></i>
-            </div>
-        </div>
+        <button onclick="logout()" class="text-sm text-neutral-400 hover:text-red-400 transition-colors"><i class="fa-solid fa-power-off mr-1"></i> Exit</button>
     </nav>
 
     <main class="max-w-7xl mx-auto p-6 space-y-8">
         
-        <!-- Welcome Hero Section -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Operations Dashboard</h1>
-                <p class="text-neutral-400 mt-1">Real-time water dispatch management and rider tracking.</p>
+        <!-- Live Ledger / Financial Metrics Engine (Features 8, 9, 10) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="gradient-card p-6 rounded-2xl">
+                <p class="text-xs uppercase tracking-wider text-neutral-400">Total Revenue Stream</p>
+                <p class="text-3xl font-bold text-emerald-400 mt-2" id="revenue-val">₹0.00</p>
             </div>
-            <button onclick="toggleOrderModal()" class="gradient-btn px-5 py-3 rounded-xl text-white font-medium flex items-center space-x-2 shadow-lg">
-                <i class="fa-solid fa-plus text-sm"></i>
-                <span>Create Dispatch Order</span>
-            </button>
-        </div>
+            <div class="gradient-card p-6 rounded-2xl">
+                <p class="text-xs uppercase tracking-wider text-neutral-400">Total Operating Expenses</p>
+                <p class="text-3xl font-bold text-red-400 mt-2" id="expense-val">₹0.00</p>
+            </div>
+            <div class="gradient-card p-6 rounded-2xl">
+                <p class="text-xs uppercase tracking-wider text-neutral-400">Net Profit / Loss Margins</p>
+                <p class="text-3xl font-bold mt-2" id="profit-val">₹0.00</p>
+            </div>
+        </section>
 
-        <!-- Analytical Insights Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
-                    <i class="fa-solid fa-truck-ramp-box"></i>
-                </div>
-                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Total Dispatches</p>
-                <p class="text-3xl font-semibold text-white mt-2" id="stat-total">0</p>
-            </div>
-
-            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
-                    <i class="fa-solid fa-spinner"></i>
-                </div>
-                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Active Deliveries</p>
-                <p class="text-3xl font-semibold text-cyan-400 mt-2" id="stat-active">0</p>
-            </div>
-
-            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Successful</p>
-                <p class="text-3xl font-semibold text-emerald-400 mt-2" id="stat-completed">0</p>
-            </div>
-
-            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
-                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Pending Orders</p>
-                <p class="text-3xl font-semibold text-amber-400 mt-2" id="stat-pending">0</p>
-            </div>
-        </div>
-
-        <!-- Master Operations Table -->
-        <div class="apple-blur rounded-2xl overflow-hidden shadow-2xl">
-            <div class="px-6 py-5 border-b border-neutral-800 flex justify-between items-center flex-wrap gap-4">
-                <div>
-                    <h3 class="text-lg font-semibold text-white">Live Operations Stream</h3>
-                    <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-xs font-medium tracking-wide text-neutral-400 uppercase">Live Monitor</span>
-                </div>
-            </div>
+        <!-- Dynamic Management Modules Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
-                            <th class="px-6 py-4 font-medium">Order ID</th>
-                            <th class="px-6 py-4 font-medium">Customer Details</th>
-                            <th class="px-6 py-4 font-medium">Quantity</th>
-                            <th class="px-6 py-4 font-medium">Assigned Rider</th>
-                            <th class="px-6 py-4 font-medium">Live Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
-                        <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Column 1: Orderbook & Dispatch Matrix (Features 4, 5, 6) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="gradient-card rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-book-open text-blue-400 mr-2"></i>Master Order Book</h3>
+                        <button onclick="openOrderModal()" class="bg-blue-600 text-xs px-3 py-2 rounded-xl hover:bg-blue-700 transition-all">+ Add Dispatch</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-neutral-300">
+                            <thead>
+                                <tr class="text-xs text-neutral-500 uppercase border-b border-neutral-800">
+                                    <th class="py-2">Client / Address</th>
+                                    <th class="py-2">Qty</th>
+                                    <th class="py-2">Rider</th>
+                                    <th class="py-2">Payment Status</th>
+                                    <th class="py-2 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orderbook-rows" class="divide-y divide-neutral-800">
+                                <!-- Dynamic Sync Entry Layer -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Expense & Salary Input Terminal (Feature 7, 9) -->
+                <div class="gradient-card rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-3"><i class="fa-solid fa-money-bill-wave text-amber-400 mr-2"></i>Log Business Expense</h4>
+                        <form onsubmit="addExpense(event)" class="space-y-3">
+                            <input type="text" id="exp-desc" placeholder="Expense description" required class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none">
+                            <input type="number" id="exp-amount" placeholder="Amount (₹)" required class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none">
+                            <button type="submit" class="w-full bg-neutral-800 hover:bg-neutral-700 text-xs text-white py-2 rounded-xl transition-all">Record Ledger Expense</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-3"><i class="fa-solid fa-user-gear text-cyan-400 mr-2"></i>Salary Infrastructure Logs</h4>
+                        <form onsubmit="updateSalary(event)" class="space-y-3">
+                            <input type="text" id="sal-rider" placeholder="Rider username" required class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none">
+                            <input type="number" id="sal-amount" placeholder="Salary update (₹)" required class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none">
+                            <button type="submit" class="w-full bg-neutral-800 hover:bg-neutral-700 text-xs text-white py-2 rounded-xl transition-all">Update Workforce Payout</button>
+                        </form>
+                    </div>
+                </div>
             </div>
+
+            <!-- Column 2: Workforce Attendance & Documents Verification (Features 2, 3) -->
+            <div class="space-y-6">
+                <!-- Attendance Matrix -->
+                <div class="gradient-card rounded-2xl p-6">
+                    <h3 class="text-base font-bold text-white mb-4"><i class="fa-solid fa-calendar-check text-emerald-400 mr-2"></i>Attendance Dashboard</h3>
+                    <div id="attendance-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                        <!-- Hooked Snapshots -->
+                    </div>
+                </div>
+
+                <!-- Document Upload Vault -->
+                <div class="gradient-card rounded-2xl p-6">
+                    <h3 class="text-base font-bold text-white mb-3"><i class="fa-solid fa-file-shield text-indigo-400 mr-2"></i>Security Document Vault</h3>
+                    <div class="space-y-4">
+                        <div class="border border-dashed border-neutral-800 p-4 rounded-xl text-center">
+                            <i class="fa-solid fa-cloud-arrow-up text-neutral-600 text-xl block mb-1"></i>
+                            <span class="text-xs text-neutral-400 block">Upload Staff KYC documents securely to database logs</span>
+                        </div>
+                        <div id="doc-list" class="space-y-2 text-xs">
+                            <!-- Cloud links dynamically structured -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Create Dispatch Order Modal -->
-    <div id="orderModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="apple-blur w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6">
-            <div class="flex justify-between items-center">
-                <h3 class="text-xl font-semibold text-white">New Dispatch Allocation</h3>
-                <button onclick="toggleOrderModal()" class="text-neutral-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form class="space-y-4" id="dispatchForm">
-                <div>
-                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
-                    <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
-                    <textarea id="custAddress" required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local address"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Quantity (20L Jars)</label>
-                        <input type="number" id="custQty" required min="1" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Number of jars">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                        <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-                            <option value="Rahul Sharma">Rahul Sharma</option>
-                            <option value="Deepak Mohanty">Deepak Mohanty</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
-                    Deploy Order to Rider App
-                </button>
+    <!-- Modal Form Allocation -->
+    <div id="orderModal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="apple-blur w-full max-w-md p-6 rounded-2xl space-y-4">
+            <h3 class="text-base font-bold text-white">Create Operations Dispatch</h3>
+            <form id="dispatchForm" onsubmit="dispatchOrder(event)" class="space-y-3 text-xs">
+                <input type="text" id="ord-cust" placeholder="Client Name" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none">
+                <input type="text" id="ord-addr" placeholder="Delivery Target Address" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none">
+                <input type="number" id="ord-qty" placeholder="Quantity of 20L Jars" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none">
+                <input type="text" id="ord-rider" placeholder="Assign Rider Username" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none">
+                <input type="number" id="ord-price" placeholder="Total Cost Matrix (₹)" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl p-3 text-white outline-none">
+                <button type="submit" class="w-full bg-blue-600 font-medium py-3 rounded-xl text-white">Deploy Order Link</button>
+                <button type="button" onclick="closeOrderModal()" class="w-full text-center text-neutral-400 py-1 block">Cancel</button>
             </form>
         </div>
     </div>
 
-    <!-- Firebase SDK Logic Modules -->
+    <!-- SDK Deployment Engine -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -198,80 +151,111 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const ordersRef = collection(db, "aquapure_orders");
 
-        // Handle Add Order Flow
-        document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await addDoc(ordersRef, {
-                    orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
-                    customerName: document.getElementById('custName').value,
-                    address: document.getElementById('custAddress').value,
-                    quantity: document.getElementById('custQty').value,
-                    rider: document.getElementById('riderSelect').value,
-                    status: "Pending",
-                    timestamp: serverTimestamp()
-                });
-                document.getElementById('dispatchForm').reset();
-                window.toggleOrderModal();
-            } catch (error) {
-                console.error("Database Injection Error: ", error);
-            }
-        });
+        // Core Listeners Configuration
+        onSnapshot(collection(db, "aquapure_orders"), (snap) => {
+            const table = document.getElementById('admin-orderbook-rows');
+            table.innerHTML = '';
+            let rev = 0;
 
-        // Live Synchronizer Listener
-        onSnapshot(ordersRef, (snapshot) => {
-            const tbody = document.getElementById('order-table-body');
-            tbody.innerHTML = '';
-            
-            let total = 0, active = 0, completed = 0, pending = 0;
+            snap.forEach(d => {
+                const data = d.data();
+                if(data.payment === 'Done') rev += parseFloat(data.price || 0);
 
-            if(snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-neutral-500">No dispatch events recorded.</td></tr>`;
-            }
-
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                total++;
-
-                let statusBadge = '';
-                if(data.status === 'Pending') {
-                    pending++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1.5"></i>Pending Allocation</span>`;
-                } else if(data.status === 'Out for Delivery') {
-                    active++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Out For Delivery</span>`;
-                } else if(data.status === 'progressing well') {
-                    completed++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>progressing well</span>`;
-                }
-
-                const row = `
-                    <tr class="hover:bg-neutral-900/30 transition-colors">
-                        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-white">${data.customerName}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address}</div>
+                table.innerHTML += `
+                    <tr>
+                        <td class="py-3 font-medium text-white">${data.customerName}<br><span class="text-xs text-neutral-500">${data.address}</span></td>
+                        <td>${data.quantity}</td>
+                        <td><span class="text-xs text-blue-400 font-mono">${data.rider}</span></td>
+                        <td>
+                            <button onclick="togglePayment('${d.id}', '${data.payment}')" class="text-xs font-semibold ${data.payment === 'Done' ? 'text-emerald-400' : 'text-amber-400 hover:underline'}">
+                                ${data.payment || 'Due'}
+                            </button>
                         </td>
-                        <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity} Jars (20L)</td>
-                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider}</td>
-                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="text-right text-xs font-medium text-neutral-400">${data.status}</td>
                     </tr>
                 `;
-                tbody.innerHTML += row;
             });
-
-            // Update DOM metrics counters
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-active').innerText = active;
-            document.getElementById('stat-completed').innerText = completed;
-            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('revenue-val').innerText = '₹' + rev.toFixed(2);
+            calculateMetrics();
         });
 
-        window.toggleOrderModal = function() {
-            document.getElementById('orderModal').classList.toggle('hidden');
+        onSnapshot(collection(db, "aquapure_attendance"), (snap) => {
+            const list = document.getElementById('attendance-list');
+            list.innerHTML = '';
+            snap.forEach(d => {
+                const data = d.data();
+                list.innerHTML += `
+                    <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-900 flex justify-between items-center text-xs">
+                        <div><p class="font-bold text-white">${data.username.toUpperCase()}</p><p class="text-neutral-500 text-[10px]">${data.timestamp}</p></div>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium">Clocked In</span>
+                    </div>
+                `;
+            });
+        });
+
+        // Financial Math Execution Engine
+        let totalExpensesGlobal = 0;
+        onSnapshot(collection(db, "aquapure_expenses"), (snap) => {
+            let exp = 0;
+            snap.forEach(d => exp += parseFloat(d.data().amount || 0));
+            totalExpensesGlobal = exp;
+            document.getElementById('expense-val').innerText = '₹' + exp.toFixed(2);
+            calculateMetrics();
+        });
+
+        function calculateMetrics() {
+            const rev = parseFloat(document.getElementById('revenue-val').innerText.replace('₹', '')) || 0;
+            const net = rev - totalExpensesGlobal;
+            const target = document.getElementById('profit-val');
+            target.innerText = '₹' + net.toFixed(2);
+            target.className = `text-3xl font-bold mt-2 ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
         }
+
+        window.dispatchOrder = async function(e) {
+            e.preventDefault();
+            await addDoc(collection(db, "aquapure_orders"), {
+                customerName: document.getElementById('ord-cust').value,
+                address: document.getElementById('ord-addr').value,
+                quantity: document.getElementById('ord-qty').value,
+                rider: document.getElementById('ord-rider').value.trim().toLowerCase(),
+                price: document.getElementById('ord-price').value,
+                payment: "Due",
+                status: "Pending Allocation"
+            });
+            closeOrderModal();
+            document.getElementById('dispatchForm').reset();
+        };
+
+        window.togglePayment = async function(id, current) {
+            const nextState = current === 'Done' ? 'Due' : 'Done';
+            await updateDoc(doc(db, "aquapure_orders", id), { payment: nextState });
+        };
+
+        window.addExpense = async function(e) {
+            e.preventDefault();
+            await addDoc(collection(db, "aquapure_expenses"), {
+                description: document.getElementById('exp-desc').value,
+                amount: document.getElementById('exp-amount').value
+            });
+            document.getElementById('exp-desc').value = '';
+            document.getElementById('exp-amount').value = '';
+        };
+
+        window.updateSalary = async function(e) {
+            e.preventDefault();
+            await addDoc(collection(db, "aquapure_expenses"), {
+                description: `Salary Allocation: ${document.getElementById('sal-rider').value}`,
+                amount: document.getElementById('sal-amount').value
+            });
+            alert("Salary payout logged directly to business expense channel.");
+            document.getElementById('sal-rider').value = '';
+            document.getElementById('sal-amount').value = '';
+        };
+
+        window.openOrderModal = function() { document.getElementById('orderModal').classList.remove('hidden'); }
+        window.closeOrderModal = function() { document.getElementById('orderModal').classList.add('hidden'); }
+        window.logout = function() { localStorage.clear(); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>
