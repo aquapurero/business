@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaPure Admin Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght=300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -172,6 +172,10 @@
                     <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
                 </div>
                 <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number</label>
+                    <input type="tel" id="custMobile" required pattern="[0-9]{10}" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="10-digit mobile number">
+                </div>
+                <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
                     <textarea id="custAddress" required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local address"></textarea>
                 </div>
@@ -227,6 +231,7 @@
                 await addDoc(ordersRef, {
                     orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
                     customerName: document.getElementById('custName').value,
+                    mobileNumber: document.getElementById('custMobile').value,
                     address: document.getElementById('custAddress').value,
                     quantity: parseInt(document.getElementById('custQty').value) || 0,
                     rider: document.getElementById('riderSelect').value,
@@ -271,13 +276,11 @@
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
-        // Create secondary listeners to pull down continuous live rider metrics
         let localRiderWallets = {};
         onSnapshot(ridersRef, (walletSnapshot) => {
             walletSnapshot.forEach((wDoc) => {
                 localRiderWallets[wDoc.id] = wDoc.data();
             });
-            // Re-trigger visual layout building whenever wallet profiles modify
             refreshRiderRosterLayout();
         });
 
@@ -390,7 +393,7 @@
                     statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1.5"></i>Pending</span>`;
                 } else if(data.status === 'Out for Delivery') {
                     active++;
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Transit</span>`;
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"><i class="fa-solid fa-truck-fast mr-1.5"></i>Transit</span>`;
                 } else if(data.status === 'progressing well') {
                     completed++;
                     statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>Delivered</span>`;
@@ -401,6 +404,7 @@
                         <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
                         <td class="px-6 py-4">
                             <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
+                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-phone text-neutral-500 mr-1"></i>${data.mobileNumber || 'No Phone'}</div>
                             <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address || 'No Address'}</div>
                         </td>
                         <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity || 0} Jars (20L)</td>
@@ -416,7 +420,6 @@
                 tbody.innerHTML += row;
             });
 
-            // Update analytical telemetry widgets
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-active').innerText = active;
             document.getElementById('stat-completed').innerText = completed;
