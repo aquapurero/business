@@ -151,7 +151,6 @@
         let unsubscribeTasks = null;
         let unsubscribeWallet = null;
 
-        // DOM Elements
         const punchInBtn = document.getElementById('punch-in-btn');
         const punchOutBtn = document.getElementById('punch-out-btn');
         const pipelineView = document.getElementById('pipeline-view');
@@ -170,7 +169,6 @@
         const attendanceRef = doc(db, "rider_attendance", attendanceDocId);
         const riderProfileRef = doc(db, "riders", riderDocSlug);
 
-        // Real-Time Active Balance Sync
         function listenToWallet() {
             if (unsubscribeWallet) unsubscribeWallet();
             
@@ -191,7 +189,6 @@
             });
         }
 
-        // Setup Checkpoint
         async function checkAttendanceState() {
             try {
                 listenToWallet();
@@ -203,7 +200,6 @@
                         setUIOnline(data.punchIn);
                         listenToLiveTasks();
                     } else if (data.punchOut) {
-                        // FIX: Keeps the Punch In active even if a past record exists for testing/resets
                         setUIOffline(data.punchIn, data.punchOut);
                     }
                 } else {
@@ -227,7 +223,6 @@
         }
 
         function setUIOffline(punchInTime = null, punchOutTime = null) {
-            // FIX: Keep punch in button enabled when offline so they are never permanently locked out
             punchInBtn.disabled = false; 
             punchOutBtn.disabled = true;
             pipelineView.classList.add('hidden');
@@ -244,13 +239,11 @@
             }
         }
 
-        // Action Trigger: Punch In
         punchInBtn.addEventListener('click', async () => {
             const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             punchInBtn.disabled = true;
             
             try {
-                // 1. Log or Overwrite Attendance Record
                 await setDoc(attendanceRef, {
                     rider: currentRider,
                     date: getTodayString(),
@@ -259,7 +252,6 @@
                     timestamp: new Date()
                 }, { merge: true });
 
-                // 2. Fetch profile doc to dynamically check balance
                 const riderSnap = await getDoc(riderProfileRef);
                 let baseBalance = 0;
 
@@ -270,7 +262,6 @@
                     }
                 }
 
-                // 3. Increment balance securely by adding ₹250
                 await setDoc(riderProfileRef, {
                     walletBalance: baseBalance + 250,
                     lastCreditReason: "Daily Punch In Bonus",
@@ -280,12 +271,11 @@
                 setUIOnline(timeString);
                 listenToLiveTasks();
             } catch (error) {
-                console.error("Punch In execution sequence error:", error);
+                console.error("Punch In error:", error);
                 punchInBtn.disabled = false;
             }
         });
 
-        // Action Trigger: Punch Out
         punchOutBtn.addEventListener('click', async () => {
             const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             punchOutBtn.disabled = true;
@@ -326,6 +316,7 @@
                 snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const docId = docSnap.id;
+                    const phoneNum = data.mobileNumber || '';
 
                     if (data.status !== 'progressing well') {
                         activeTasks++;
@@ -334,14 +325,18 @@
                     let operationalLayout = '';
                     if (data.status === 'Pending' || data.status === 'Out for Delivery') {
                         operationalLayout = `
-                            <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
-                                <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60">
-                                    <i class="fa-solid fa-map-location-dot"></i>
+                            <div class="border-t border-neutral-800/60 pt-4 flex gap-2">
+                                <a href="tel:${phoneNum}" class="w-1/4 bg-blue-600/20 border border-blue-500/30 text-blue-400 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1">
+                                    <i class="fa-solid fa-phone text-xs"></i>
+                                    <span>Call</span>
+                                </a>
+                                <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/4 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1 border border-neutral-700/60">
+                                    <i class="fa-solid fa-map-location-dot text-xs"></i>
                                     <span>Maps</span>
                                 </button>
-                                <button onclick="window.updateDeliveryStatus('${docId}', this)" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                                    <i class="fa-solid fa-circle-check"></i>
-                                    <span>Mark Delivered</span>
+                                <button onclick="window.updateDeliveryStatus('${docId}', this)" class="w-2/4 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1 shadow-lg">
+                                    <i class="fa-solid fa-circle-check text-xs"></i>
+                                    <span>Done</span>
                                 </button>
                             </div>
                         `;
@@ -370,6 +365,11 @@
                                 </div>
                             </div>
                             <div class="space-y-2.5 pt-1 text-sm">
+                                ${phoneNum ? `
+                                <div class="flex items-center space-x-2.5 text-neutral-400">
+                                    <i class="fa-solid fa-phone text-neutral-500 w-4 text-center text-xs"></i>
+                                    <span>${phoneNum}</span>
+                                </div>` : ''}
                                 <div class="flex items-start space-x-2.5">
                                     <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
                                     <span class="text-neutral-300">${data.address}</span>
@@ -386,7 +386,7 @@
         }
 
         window.updateDeliveryStatus = async function(docId, buttonElement) {
-            buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
+            buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i>`;
             try {
                 const docRef = doc(db, "aquapure_orders", docId);
                 await updateDoc(docRef, {
@@ -394,7 +394,7 @@
                 });
             } catch (error) {
                 console.error("Status sync failed:", error);
-                buttonElement.innerHTML = `<span>Error Retry</span>`;
+                buttonElement.innerHTML = `<span>Retry</span>`;
             }
         };
 
