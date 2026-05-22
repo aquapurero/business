@@ -166,11 +166,18 @@
                 <h3 class="text-xl font-semibold text-white">New Dispatch Allocation</h3>
                 <button onclick="toggleOrderModal()" class="text-neutral-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <form class="space-y-4" id="dispatchForm">
-                <div>
+            <form class="space-y-4" id="dispatchForm" autocomplete="off">
+                <div class="relative">
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
-                    <input type="text" id="custName" list="customerSuggestions" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Type or choose customer...">
-                    <datalist id="customerSuggestions"></datalist>
+                    <div class="relative">
+                        <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Type or choose customer...">
+                        <div class="absolute right-4 top-3.5 text-neutral-500 pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="dropdownPanel" class="hidden absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-950/95 border border-neutral-800 backdrop-blur-xl shadow-2xl z-50 custom-scrollbar divide-y divide-neutral-900">
+                        </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number</label>
@@ -219,42 +226,84 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
-        const customersRef = collection(db, "aquapure_customers"); // Directory for unique customer profiles
+        const customersRef = collection(db, "aquapure_customers");
 
-        let savedCustomers = {};
+        let savedCustomers = [];
 
         function getTodayString() {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Live sync saved customer directories into the dropdown suggestion element
+        // Live track registered clients from Firestore
         onSnapshot(customersRef, (snapshot) => {
-            const datalist = document.getElementById('customerSuggestions');
-            datalist.innerHTML = '';
-            savedCustomers = {};
-
+            savedCustomers = [];
             snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const nameKey = data.customerName.trim();
-                savedCustomers[nameKey] = data;
-
-                const option = document.createElement('option');
-                option.value = nameKey;
-                datalist.appendChild(option);
+                savedCustomers.push(docSnap.data());
             });
+            renderDropdownItems();
         });
 
-        // Autofill logic when matching input value is tracked
-        document.getElementById('custName').addEventListener('input', (e) => {
-            const val = e.target.value.trim();
-            if (savedCustomers[val]) {
-                document.getElementById('custMobile').value = savedCustomers[val].mobileNumber || '';
-                document.getElementById('custAddress').value = savedCustomers[val].address || '';
+        const custNameInput = document.getElementById('custName');
+        const dropdownPanel = document.getElementById('dropdownPanel');
+
+        // Logic to construct list inside dropdown
+        function renderDropdownItems(filterText = '') {
+            dropdownPanel.innerHTML = '';
+            const search = filterText.toLowerCase().trim();
+            
+            const filtered = savedCustomers.filter(c => 
+                c.customerName.toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                dropdownPanel.innerHTML = `<div class="px-4 py-3 text-xs text-neutral-500">No saved customers found</div>`;
+                return;
             }
+
+            filtered.forEach(customer => {
+                const row = document.createElement('div');
+                row.className = "px-4 py-3 hover:bg-blue-600/20 text-sm text-white cursor-pointer transition-colors flex flex-col gap-0.5";
+                row.innerHTML = `
+                    <span class="font-medium text-neutral-200">${customer.customerName}</span>
+                    <span class="text-xs text-neutral-400 font-mono">${customer.mobileNumber}</span>
+                `;
+                
+                // On select action
+                row.addEventListener('mousedown', (e) => {
+                    // Prevent input blur trigger from blocking selection clicks
+                    e.preventDefault(); 
+                    selectCustomer(customer);
+                });
+                
+                dropdownPanel.appendChild(row);
+            });
+        }
+
+        function selectCustomer(customer) {
+            custNameInput.value = customer.customerName;
+            document.getElementById('custMobile').value = customer.mobileNumber || '';
+            document.getElementById('custAddress').value = customer.address || '';
+            dropdownPanel.classList.add('hidden');
+        }
+
+        // Dropdown interactive triggers
+        custNameInput.addEventListener('focus', () => {
+            renderDropdownItems(custNameInput.value);
+            dropdownPanel.classList.remove('hidden');
         });
 
-        // Handle Add Order Flow & Customer Save Routine
+        custNameInput.addEventListener('input', (e) => {
+            renderDropdownItems(e.target.value);
+        });
+
+        custNameInput.addEventListener('blur', () => {
+            // Delay closing slightly so clicking options takes precedence
+            setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
+        });
+
+
+        // Handle Add Order Flow & Profile indexing
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -265,7 +314,7 @@
             const assignedRider = document.getElementById('riderSelect').value;
 
             try {
-                // 1. Queue core dispatch document
+                // 1. Log dispatch entry order document
                 await addDoc(ordersRef, {
                     orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
                     customerName: name,
@@ -277,7 +326,7 @@
                     timestamp: serverTimestamp()
                 });
 
-                // 2. Index profile dynamically to skip future re-typing work
+                // 2. Save profile data to skip future work
                 const customerSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
                 await setDoc(doc(db, "aquapure_customers", customerSlug), {
                     customerName: name,
