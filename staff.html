@@ -43,8 +43,8 @@
             <h1 class="text-lg font-semibold tracking-tight text-white">AquaPure <span class="text-xs text-neutral-400 font-normal">Rider Port</span></h1>
         </div>
         <div class="flex items-center space-x-2">
-            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span class="text-xs font-medium text-emerald-400 tracking-wide bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">Online</span>
+            <span id="status-ping" class="h-2 w-2 rounded-full bg-neutral-500"></span>
+            <span id="status-badge" class="text-xs font-medium text-neutral-400 tracking-wide bg-neutral-500/10 px-2 py-0.5 rounded-full border border-neutral-500/20">Offline</span>
         </div>
     </header>
 
@@ -67,15 +67,43 @@
             </div>
         </div>
 
-        <!-- Task Allocation Header -->
-        <div class="flex items-center justify-between px-1">
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Task Pipeline</h3>
-            <span class="text-xs text-blue-400 font-medium">Real-time</span>
+        <!-- Punch In / Punch Out Shift Panel -->
+        <div class="apple-card p-4 rounded-2xl space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Shift Management</span>
+                <span id="shift-time-display" class="text-xs text-neutral-400 font-mono">--:--</span>
+            </div>
+            <div class="flex gap-3">
+                <button id="punch-in-btn" class="w-1/2 bg-emerald-600 active:bg-emerald-700 text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 transition-all disabled:opacity-40 disabled:pointer-events-none">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>Punch In</span>
+                </button>
+                <button id="punch-out-btn" class="w-1/2 bg-rose-600 active:bg-rose-700 text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 transition-all disabled:opacity-40 disabled:pointer-events-none" disabled>
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Punch Out</span>
+                </button>
+            </div>
         </div>
 
-        <!-- Interactive Delivery Cards Stack -->
-        <div class="space-y-4" id="task-container">
-            <p class="text-center text-neutral-500 py-6 text-sm">Fetching active dispatches...</p>
+        <!-- Pipeline View Container -->
+        <div id="pipeline-view" class="space-y-4 hidden">
+            <!-- Task Allocation Header -->
+            <div class="flex items-center justify-between px-1">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Task Pipeline</h3>
+                <span class="text-xs text-blue-400 font-medium">Real-time</span>
+            </div>
+
+            <!-- Interactive Delivery Cards Stack -->
+            <div class="space-y-4" id="task-container">
+                <p class="text-center text-neutral-500 py-6 text-sm">Fetching active dispatches...</p>
+            </div>
+        </div>
+
+        <!-- Shift Offline Message -->
+        <div id="offline-placeholder" class="apple-card p-8 rounded-2xl text-center space-y-2">
+            <i class="fa-solid fa-mug-hot text-3xl text-neutral-600"></i>
+            <h4 class="text-sm font-medium text-neutral-400">You are currently off-duty</h4>
+            <p class="text-xs text-neutral-500 max-w-xs mx-auto">Punch in above to begin receiving live dispatches and route information.</p>
         </div>
 
     </main>
@@ -95,7 +123,7 @@
     <!-- Firebase Engine Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -109,88 +137,196 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Target current logged agent workload
         const currentRider = "Rahul Sharma"; 
-        const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
+        let unsubscribeTasks = null;
 
-        onSnapshot(q, (snapshot) => {
-            const container = document.getElementById('task-container');
-            container.innerHTML = '';
-            let activeTasks = 0;
+        // Dom Elements
+        const punchInBtn = document.getElementById('punch-in-btn');
+        const punchOutBtn = document.getElementById('punch-out-btn');
+        const pipelineView = document.getElementById('pipeline-view');
+        const offlinePlaceholder = document.getElementById('offline-placeholder');
+        const statusPing = document.getElementById('status-ping');
+        const statusBadge = document.getElementById('status-badge');
+        const shiftTimeDisplay = document.getElementById('shift-time-display');
 
-            if(snapshot.empty) {
-                container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-sm">No dispatches allocated for you today.</p>`;
-                document.getElementById('pending-count').innerText = "0 Tasks";
-                return;
+        // Helper: Format date as YYYY-MM-DD local signature
+        function getTodayString() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        const attendanceDocId = `${getTodayString()}_${currentRider.replace(/\s+/g, '_')}`;
+        const attendanceRef = doc(db, "rider_attendance", attendanceDocId);
+
+        // Check Initial Attendance Status for today
+        async function checkAttendanceState() {
+            try {
+                const docSnap = await getDoc(attendanceRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.punchIn && !data.punchOut) {
+                        setUIOnline(data.punchIn);
+                        listenToLiveTasks();
+                    } else if (data.punchOut) {
+                        setUIOffline(data.punchIn, data.punchOut);
+                    }
+                }
+            } catch (err) {
+                console.error("Error reading attendance checkpoint:", err);
             }
+        }
 
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const docId = docSnap.id;
+        function setUIOnline(punchInTime) {
+            punchInBtn.disabled = true;
+            punchOutBtn.disabled = false;
+            pipelineView.classList.remove('hidden');
+            offlinePlaceholder.classList.add('hidden');
+            
+            statusPing.className = "h-2 w-2 rounded-full bg-emerald-500 animate-ping";
+            statusBadge.className = "text-xs font-medium text-emerald-400 tracking-wide bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20";
+            statusBadge.innerText = "Online";
+            shiftTimeDisplay.innerText = `In: ${punchInTime}`;
+        }
 
-                if (data.status !== 'progressing well') {
-                    activeTasks++;
-                }
+        function setUIOffline(punchInTime = null, punchOutTime = null) {
+            punchInBtn.disabled = true; // Block double punching for the same day frame
+            punchOutBtn.disabled = true;
+            pipelineView.classList.add('hidden');
+            offlinePlaceholder.classList.remove('hidden');
+            
+            statusPing.className = "h-2 w-2 rounded-full bg-neutral-500";
+            statusBadge.className = "text-xs font-medium text-neutral-400 tracking-wide bg-neutral-500/10 px-2 py-0.5 rounded-full border border-neutral-500/20";
+            statusBadge.innerText = "Offline";
+            
+            if (punchInTime && punchOutTime) {
+                shiftTimeDisplay.innerText = `Shift Finished`;
+            }
+        }
 
-                let operationalLayout = '';
-                if (data.status === 'Pending' || data.status === 'Out for Delivery') {
-                    // Update to dynamic active status switch options
-                    operationalLayout = `
-                        <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
-                            <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60">
-                                <i class="fa-solid fa-map-location-dot"></i>
-                                <span>Maps</span>
-                            </button>
-                            <button onclick="updateDeliveryStatus('${docId}', this)" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Mark Delivered</span>
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    operationalLayout = `
-                        <div class="w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <span>progressing well</span>
-                        </div>
-                    `;
-                }
-
-                const cardHtml = `
-                    <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1.5 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-blue-500'}"></div>
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-[11px] font-semibold tracking-wider uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-blue-400 bg-blue-400/10 border-blue-500/20'} px-2 py-0.5 rounded border">
-                                    ${data.status === 'progressing well' ? 'Completed' : 'Active Route'}
-                                </span>
-                                <h4 class="text-lg font-bold text-white mt-2">${data.customerName}</h4>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold text-neutral-200">${data.quantity} Jars</p>
-                                <p class="text-[11px] text-neutral-400">ID: #${data.orderId}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2.5 pt-1 text-sm">
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
-                                <span class="text-neutral-300">${data.address}</span>
-                            </div>
-                        </div>
-                        ${operationalLayout}
-                    </div>
-                `;
-                container.innerHTML += cardHtml;
-            });
-
-            document.getElementById('pending-count').innerText = `${activeTasks} Tasks`;
+        // Action Trigger: Punch In
+        punchInBtn.addEventListener('click', async () => {
+            const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            punchInBtn.disabled = true;
+            
+            try {
+                await setDoc(attendanceRef, {
+                    rider: currentRider,
+                    date: getTodayString(),
+                    punchIn: timeString,
+                    punchOut: null,
+                    timestamp: new Date()
+                }, { merge: true });
+                
+                setUIOnline(timeString);
+                listenToLiveTasks();
+            } catch (error) {
+                console.error("Punch In failed:", error);
+                punchInBtn.disabled = false;
+            }
         });
 
+        // Action Trigger: Punch Out
+        punchOutBtn.addEventListener('click', async () => {
+            const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            punchOutBtn.disabled = true;
+            
+            try {
+                await updateDoc(attendanceRef, {
+                    punchOut: timeString
+                });
+                
+                if (unsubscribeTasks) {
+                    unsubscribeTasks();
+                }
+                setUIOffline(null, timeString);
+            } catch (error) {
+                console.error("Punch Out failed:", error);
+                punchOutBtn.disabled = false;
+            }
+        });
+
+        // Listen for assigned tasks in real-time
+        function listenToLiveTasks() {
+            const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
+            
+            unsubscribeTasks = onSnapshot(q, (snapshot) => {
+                const container = document.getElementById('task-container');
+                container.innerHTML = '';
+                let activeTasks = 0;
+
+                if(snapshot.empty) {
+                    container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-sm">No dispatches allocated for you today.</p>`;
+                    document.getElementById('pending-count').innerText = "0 Tasks";
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+
+                    if (data.status !== 'progressing well') {
+                        activeTasks++;
+                    }
+
+                    let operationalLayout = '';
+                    if (data.status === 'Pending' || data.status === 'Out for Delivery') {
+                        operationalLayout = `
+                            <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
+                                <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60">
+                                    <i class="fa-solid fa-map-location-dot"></i>
+                                    <span>Maps</span>
+                                </button>
+                                <button onclick="window.updateDeliveryStatus('${docId}', this)" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Mark Delivered</span>
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        operationalLayout = `
+                            <div class="w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span>progressing well</span>
+                            </div>
+                        `;
+                    }
+
+                    const cardHtml = `
+                        <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1.5 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-blue-500'}"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[11px] font-semibold tracking-wider uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-blue-400 bg-blue-400/10 border-blue-500/20'} px-2 py-0.5 rounded border">
+                                        ${data.status === 'progressing well' ? 'Completed' : 'Active Route'}
+                                    </span>
+                                    <h4 class="text-lg font-bold text-white mt-2">${data.customerName}</h4>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-bold text-neutral-200">${data.quantity} Jars</p>
+                                    <p class="text-[11px] text-neutral-400">ID: #${data.orderId}</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2.5 pt-1 text-sm">
+                                <div class="flex items-start space-x-2.5">
+                                    <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
+                                    <span class="text-neutral-300">${data.address}</span>
+                                </div>
+                            </div>
+                            ${operationalLayout}
+                        </div>
+                    `;
+                    container.innerHTML += cardHtml;
+                });
+
+                document.getElementById('pending-count').innerText = `${activeTasks} Tasks`;
+            });
+        }
+
+        // Global status updater binding across dynamic loops
         window.updateDeliveryStatus = async function(docId, buttonElement) {
             buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
             try {
                 const docRef = doc(db, "aquapure_orders", docId);
-                // System standard update tag insertion
                 await updateDoc(docRef, {
                     status: "progressing well"
                 });
@@ -198,7 +334,10 @@
                 console.error("Status sync failed:", error);
                 buttonElement.innerHTML = `<span>Error Retry</span>`;
             }
-        }
+        };
+
+        // Initialize state engine check
+        checkAttendanceState();
     </script>
 </body>
 </html>
