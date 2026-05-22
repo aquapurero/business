@@ -3,99 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaPure Staff Hub</title>
-    <!-- Google Fonts & Tailwind CSS -->
+    <title>AquaPure Staff - Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0b0c10;
-            color: #f5f5f7;
-        }
-        .apple-card {
-            background: rgba(28, 28, 30, 0.7);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .ios-action-btn {
-            background: #0071e3;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .ios-action-btn:active {
-            transform: scale(0.96);
-            background: #005bb5;
-        }
+        body { font-family: 'SF Pro Display', sans-serif; background-color: #0b0c10; color: #f5f5f7; }
+        .apple-card { background: rgba(28, 28, 30, 0.75); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.06); }
+        .ios-btn { background: #0071e3; transition: all 0.2s ease; }
+        .ios-btn:active { transform: scale(0.97); }
     </style>
 </head>
-<body class="min-h-screen pb-12 select-none">
+<body class="min-h-screen pb-20 select-none">
 
-    <!-- Premium Minimal Header -->
+    <!-- Header Config -->
     <header class="sticky top-0 z-50 bg-[#0b0c10]/80 backdrop-blur-md border-b border-neutral-900 px-5 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-2.5">
-            <div class="h-8 w-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/10">
-                <i class="fa-solid fa-droplet text-sm"></i>
-            </div>
-            <h1 class="text-lg font-semibold tracking-tight text-white">AquaPure <span class="text-xs text-neutral-400 font-normal">Rider Port</span></h1>
-        </div>
-        <div class="flex items-center space-x-2">
-            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span class="text-xs font-medium text-emerald-400 tracking-wide bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">Online</span>
-        </div>
+        <span class="font-bold text-white"><i class="fa-solid fa-droplet text-blue-500 mr-2"></i>Rider Port</span>
+        <button onclick="logout()" class="text-xs text-neutral-400 hover:text-red-400">Logout</button>
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-5">
         
-        <!-- Welcome Profiles Card -->
-        <div class="apple-card p-4 rounded-2xl flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="h-12 w-12 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-blue-400 text-lg font-semibold">
-                    RS
-                </div>
-                <div>
-                    <h2 class="text-base font-semibold text-white">Rahul Sharma</h2>
-                    <p class="text-xs text-neutral-400">Rider ID: #FF992</p>
-                </div>
+        <!-- Feature 2: Attendance Punch Terminal Box -->
+        <div class="apple-card p-4 rounded-2xl flex flex-col justify-between gap-4">
+            <div>
+                <h2 class="text-sm font-bold text-white" id="profile-name">Rider Dashboard</h2>
+                <p class="text-xs text-neutral-400">Mark daily attendance profile check-in</p>
             </div>
-            <div class="text-right">
-                <span class="text-xs text-neutral-400 uppercase tracking-wider block">Remaining</span>
-                <span class="text-xl font-bold text-white" id="pending-count">0 Tasks</span>
-            </div>
+            <button id="punch-btn" onclick="punchAttendance()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-xs text-white font-medium py-3 rounded-xl transition-all shadow-md">
+                <i class="fa-solid fa-fingerprint mr-1.5"></i> Clock-In Daily Shift
+            </button>
+        </div>
+
+        <!-- Feature 3: Document Vault Link Handler -->
+        <div class="apple-card p-4 rounded-2xl space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">KYC Verification Files</h3>
+            <input type="text" id="doc-title" placeholder="Document Name (e.g. Driving License)" class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-white outline-none">
+            <input type="text" id="doc-url" placeholder="Paste verification URL or Google Drive Link" class="w-full text-xs bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-white outline-none">
+            <button onclick="submitDocLink()" class="w-full bg-neutral-800 hover:bg-neutral-700 text-xs text-white py-2 rounded-xl border border-neutral-700">Link Secure Document</button>
         </div>
 
         <!-- Task Allocation Header -->
         <div class="flex items-center justify-between px-1">
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Task Pipeline</h3>
-            <span class="text-xs text-blue-400 font-medium">Real-time</span>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Allocated Deliveries Pool</h3>
         </div>
 
-        <!-- Interactive Delivery Cards Stack -->
-        <div class="space-y-4" id="task-container">
-            <p class="text-center text-neutral-500 py-6 text-sm">Fetching active dispatches...</p>
+        <!-- Deliveries Stream Stack (Features 4, 5, 6) -->
+        <div class="space-y-4" id="staff-task-container">
+            <!-- Dynamic Injection Modules -->
         </div>
 
     </main>
 
-    <!-- Navigation Tab Alternative (iOS style Bottom Bar) -->
-    <div class="fixed bottom-0 inset-x-0 bg-[#0b0c10]/80 backdrop-blur-lg border-t border-neutral-900 py-2.5 flex justify-around items-center max-w-md mx-auto">
-        <button class="flex flex-col items-center space-y-0.5 text-blue-500">
-            <i class="fa-solid fa-route text-lg"></i>
-            <span class="text-[10px] font-medium">Deliveries</span>
-        </button>
-        <button class="flex flex-col items-center space-y-0.5 text-neutral-500">
-            <i class="fa-solid fa-clock-rotate-left text-lg"></i>
-            <span class="text-[10px] font-medium">Logs</span>
-        </button>
-    </div>
-
-    <!-- Firebase Engine Integration -->
+    <!-- Script Application Sync Modules -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -108,97 +71,94 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // Target current logged agent workload
-        const currentRider = "Rahul Sharma"; 
-        const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
 
-        onSnapshot(q, (snapshot) => {
-            const container = document.getElementById('task-container');
+        // Security session checkpoint verification
+        const activeUser = localStorage.getItem('active_user') || 'anonymous_rider';
+        document.getElementById('profile-name').innerText = "Rider: " + activeUser.toUpperCase();
+
+        // Target active dynamic matching tasks
+        const q = query(collection(db, "aquapure_orders"), where("rider", "==", activeUser));
+
+        onSnapshot(q, (snap) => {
+            const container = document.getElementById('staff-task-container');
             container.innerHTML = '';
-            let activeTasks = 0;
 
-            if(snapshot.empty) {
-                container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-sm">No dispatches allocated for you today.</p>`;
-                document.getElementById('pending-count').innerText = "0 Tasks";
+            if(snap.empty) {
+                container.innerHTML = `<p class="text-center text-neutral-500 py-6 text-xs">No active orders allocated to your route parameters.</p>`;
                 return;
             }
 
-            snapshot.forEach((docSnap) => {
+            snap.forEach(docSnap => {
                 const data = docSnap.data();
-                const docId = docSnap.id;
+                const dId = docSnap.id;
 
-                if (data.status !== 'progressing well') {
-                    activeTasks++;
-                }
-
-                let operationalLayout = '';
-                if (data.status === 'Pending' || data.status === 'Out for Delivery') {
-                    // Update to dynamic active status switch options
-                    operationalLayout = `
-                        <div class="border-t border-neutral-800/60 pt-4 flex gap-3">
-                            <button onclick="window.open('https://maps.google.com', '_blank')" class="w-1/3 bg-neutral-800 text-neutral-200 font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-1.5 border border-neutral-700/60">
-                                <i class="fa-solid fa-map-location-dot"></i>
-                                <span>Maps</span>
-                            </button>
-                            <button onclick="updateDeliveryStatus('${docId}', this)" class="w-2/3 ios-action-btn text-white font-medium text-sm py-3 rounded-xl flex items-center justify-center space-x-2 shadow-lg">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Mark Delivered</span>
-                            </button>
+                let actionLayout = '';
+                if(data.status !== 'progressing well') {
+                    actionLayout = `
+                        <div class="border-t border-neutral-800/60 pt-3 flex gap-2">
+                            <button onclick="window.open('https://maps.google.com', '_blank')" class="bg-neutral-800 text-xs px-3 py-2 rounded-lg border border-neutral-700 text-neutral-200">Maps</button>
+                            <button onclick="markDelivered('${dId}')" class="w-full ios-btn text-xs text-white py-2 rounded-lg font-medium">Mark Delivered</button>
                         </div>
                     `;
                 } else {
-                    operationalLayout = `
-                        <div class="w-full bg-emerald-500/10 text-emerald-400 text-sm py-2.5 rounded-xl border border-emerald-500/20 font-medium flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-circle-check"></i>
-                            <span>progressing well</span>
+                    actionLayout = `
+                        <div class="w-full bg-emerald-500/10 text-emerald-400 text-xs py-2 rounded-lg border border-emerald-500/20 text-center font-medium">
+                            <i class="fa-solid fa-check-double mr-1"></i> progressing well
                         </div>
                     `;
                 }
 
-                const cardHtml = `
-                    <div class="apple-card rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1.5 h-full ${data.status === 'progressing well' ? 'bg-emerald-500' : 'bg-blue-500'}"></div>
+                container.innerHTML += `
+                    <div class="apple-card rounded-2xl p-4 space-y-3 relative overflow-hidden">
                         <div class="flex justify-between items-start">
                             <div>
-                                <span class="text-[11px] font-semibold tracking-wider uppercase ${data.status === 'progressing well' ? 'text-emerald-400 bg-emerald-400/10 border-emerald-500/20' : 'text-blue-400 bg-blue-400/10 border-blue-500/20'} px-2 py-0.5 rounded border">
-                                    ${data.status === 'progressing well' ? 'Completed' : 'Active Route'}
-                                </span>
-                                <h4 class="text-lg font-bold text-white mt-2">${data.customerName}</h4>
+                                <h4 class="text-base font-bold text-white">${data.customerName}</h4>
+                                <p class="text-xs text-neutral-400 mt-1"><i class="fa-solid fa-location-dot mr-1 text-neutral-500"></i>${data.address}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm font-bold text-neutral-200">${data.quantity} Jars</p>
-                                <p class="text-[11px] text-neutral-400">ID: #${data.orderId}</p>
+                                <span class="text-xs font-bold text-blue-400 block">${data.quantity} Jars</span>
+                                <span class="text-[10px] text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded mt-1 inline-block">₹${data.price}</span>
                             </div>
                         </div>
-                        <div class="space-y-2.5 pt-1 text-sm">
-                            <div class="flex items-start space-x-2.5">
-                                <i class="fa-solid fa-location-dot text-neutral-500 mt-0.5 w-4 text-center"></i>
-                                <span class="text-neutral-300">${data.address}</span>
-                            </div>
-                        </div>
-                        ${operationalLayout}
+                        <p class="text-xs">Payment State: <span class="font-bold ${data.payment === 'Done' ? 'text-emerald-400' : 'text-amber-400'}">${data.payment}</span></p>
+                        ${actionLayout}
                     </div>
                 `;
-                container.innerHTML += cardHtml;
             });
-
-            document.getElementById('pending-count').innerText = `${activeTasks} Tasks`;
         });
 
-        window.updateDeliveryStatus = async function(docId, buttonElement) {
-            buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
-            try {
-                const docRef = doc(db, "aquapure_orders", docId);
-                // System standard update tag insertion
-                await updateDoc(docRef, {
-                    status: "progressing well"
-                });
-            } catch (error) {
-                console.error("Status sync failed:", error);
-                buttonElement.innerHTML = `<span>Error Retry</span>`;
-            }
-        }
+        window.punchAttendance = async function() {
+            await addDoc(collection(db, "aquapure_attendance"), {
+                username: activeUser,
+                timestamp: new Date().toLocaleString()
+            });
+            alert("Shift attendance checked in successfully with live logs!");
+            document.getElementById('punch-btn').disabled = true;
+            document.getElementById('punch-btn').className = "w-full bg-neutral-800 text-neutral-500 text-xs py-3 rounded-xl pointer-events-none text-center";
+            document.getElementById('punch-btn').innerText = "Shift Live Checked-In";
+        };
+
+        window.submitDocLink = async function() {
+            const title = document.getElementById('doc-title').value;
+            const url = document.getElementById('doc-url').value;
+            if(!title || !url) return alert("Please fill details correctly.");
+            
+            await addDoc(collection(db, "aquapure_expenses"), {
+                description: `Document Link Audit - [${activeUser.toUpperCase()}] ${title}: ${url}`,
+                amount: 0
+            });
+            alert("KYC reference parameters mapped into system logs data nodes.");
+            document.getElementById('doc-title').value = '';
+            document.getElementById('doc-url').value = '';
+        };
+
+        window.markDelivered = async function(id) {
+            await updateDoc(doc(db, "aquapure_orders", id), {
+                status: "progressing well"
+            });
+        };
+
+        window.logout = function() { localStorage.clear(); window.location.href = 'index.html'; }
     </script>
 </body>
 </html>
