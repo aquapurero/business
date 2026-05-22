@@ -64,7 +64,7 @@
         
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Operations Operations Dashboard</h1>
+                <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Operations Dashboard</h1>
                 <p class="text-neutral-400 mt-1">Real-time water dispatch management and rider tracking.</p>
             </div>
             <button onclick="toggleOrderModal()" class="gradient-btn px-5 py-3 rounded-xl text-white font-medium flex items-center space-x-2 shadow-lg">
@@ -143,7 +143,7 @@
                             <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
                                 <th class="px-6 py-4 font-medium">Order ID</th>
                                 <th class="px-6 py-4 font-medium">Customer Details</th>
-                                <th class="px-6 py-4 font-medium">Quantity</th>
+                                <th class="px-6 py-4 font-medium">Quantity / Price</th>
                                 <th class="px-6 py-4 font-medium">Assigned Rider</th>
                                 <th class="px-6 py-4 font-medium">Live Status</th>
                                 <th class="px-6 py-4 font-medium text-center">Action</th>
@@ -226,6 +226,7 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
+        const RATE_PER_JAR = 30; // Global pricing rate parameter
 
         let activeCustomerDirectory = [];
 
@@ -245,7 +246,6 @@
                 const data = doc.data();
                 if (data.customerName && data.customerName.trim().length > 0) {
                     const cleanName = data.customerName.trim();
-                    // Keep the latest filled coordinates configuration
                     tempMap.set(cleanName.toLowerCase(), {
                         customerName: cleanName,
                         mobileNumber: data.mobileNumber || '',
@@ -454,7 +454,6 @@
 
         // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
-            // Trigger dynamic lookups processing for dropdown updates instantly
             extractUniqueCustomers(snapshot);
 
             const tbody = document.getElementById('order-table-body');
@@ -471,6 +470,9 @@
                 const data = doc.data();
                 const docId = doc.id;
                 total++;
+
+                const jars = parseInt(data.quantity) || 0;
+                const totalCharge = jars * RATE_PER_JAR;
 
                 let statusBadge = '';
                 if(data.status === 'Pending') {
@@ -492,7 +494,11 @@
                             <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-phone text-neutral-500 mr-1"></i>${data.mobileNumber || 'No Phone'}</div>
                             <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address || 'No Address'}</div>
                         </td>
-                        <td class="px-6 py-4 font-medium text-neutral-200">${data.quantity || 0} Jars (20L)</td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-neutral-200">${jars} Jars</div>
+                            <div class="text-xs text-neutral-500 font-mono mt-0.5">₹${RATE_PER_JAR} × ${jars}</div>
+                            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">Total: ₹${totalCharge}</div>
+                        </td>
                         <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
                         <td class="px-6 py-4">${statusBadge}</td>
                         <td class="px-6 py-4 text-center">
