@@ -1,1 +1,260 @@
-ggh
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure Admin Pro</title>
+    <!-- Google Fonts & Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #000000;
+            color: #f5f5f7;
+        }
+        .apple-blur {
+            background: rgba(22, 22, 23, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-btn {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0, 114, 255, 0.4);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen custom-scrollbar">
+
+    <!-- Top Premium Navigation -->
+    <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-800 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-droplet text-white text-lg"></i>
+            </div>
+            <span class="text-xl font-semibold tracking-tight text-white">AquaPure <span class="text-xs font-medium uppercase tracking-widest text-neutral-400 ml-1">Admin</span></span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="text-right hidden md:block">
+                <p class="text-sm font-medium text-white">Control Center</p>
+                <p class="text-xs text-neutral-400">Live Syncing Enabled</p>
+            </div>
+            <div class="h-10 w-10 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-blue-400">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-8">
+        
+        <!-- Welcome Hero Section -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Operations Dashboard</h1>
+                <p class="text-neutral-400 mt-1">Real-time water dispatch management and rider tracking.</p>
+            </div>
+            <button onclick="toggleOrderModal()" class="gradient-btn px-5 py-3 rounded-xl text-white font-medium flex items-center space-x-2 shadow-lg">
+                <i class="fa-solid fa-plus text-sm"></i>
+                <span>Create Dispatch Order</span>
+            </button>
+        </div>
+
+        <!-- Analytical Insights Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                </div>
+                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Total Dispatches</p>
+                <p class="text-3xl font-semibold text-white mt-2" id="stat-total">142</p>
+                <div class="flex items-center space-x-1 text-xs text-emerald-400 mt-2">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span>+12% vs yesterday</span>
+                </div>
+            </div>
+
+            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-spinner"></i>
+                </div>
+                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Active Deliveries</p>
+                <p class="text-3xl font-semibold text-cyan-400 mt-2" id="stat-active">18</p>
+                <div class="flex items-center space-x-1 text-xs text-neutral-400 mt-2">
+                    <span>Assigned to riders</span>
+                </div>
+            </div>
+
+            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Successful</p>
+                <p class="text-3xl font-semibold text-emerald-400 mt-2" id="stat-completed">124</p>
+                <div class="flex items-center space-x-1 text-xs text-emerald-400 mt-2">
+                    <span>progressing well</span>
+                </div>
+            </div>
+
+            <div class="apple-blur p-6 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 text-neutral-800/20 text-7xl transition-transform group-hover:scale-110 duration-500">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <p class="text-sm font-medium text-neutral-400 uppercase tracking-wider">Pending/Issues</p>
+                <p class="text-3xl font-semibold text-amber-400 mt-2" id="stat-pending">0</p>
+                <div class="flex items-center space-x-1 text-xs text-neutral-400 mt-2">
+                    <span>Requires attention</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Operations Table -->
+        <div class="apple-blur rounded-2xl overflow-hidden shadow-2xl">
+            <div class="px-6 py-5 border-b border-neutral-800 flex justify-between items-center flex-wrap gap-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Live Operations Stream</h3>
+                    <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs font-medium tracking-wide text-neutral-400 uppercase">Live Monitor</span>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
+                            <th class="px-6 py-4 font-medium">Order ID</th>
+                            <th class="px-6 py-4 font-medium">Customer Details</th>
+                            <th class="px-6 py-4 font-medium">Quantity</th>
+                            <th class="px-6 py-4 font-medium">Assigned Rider</th>
+                            <th class="px-6 py-4 font-medium">Live Status</th>
+                            <th class="px-6 py-4 font-medium text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
+                        <!-- Sample Dynamic Row -->
+                        <tr class="hover:bg-neutral-900/30 transition-colors">
+                            <td class="px-6 py-4 font-mono font-medium text-blue-400">#AQP-9021</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white">Ramesh Kumar</div>
+                                <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>Ward 5, Main Street</div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-neutral-200">5 Jars (20L)</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="h-7 w-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs text-neutral-300 border border-neutral-700">RS</div>
+                                    <span class="text-neutral-300 font-medium">Rahul Sharma</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                    <i class="fa-solid fa-truck-fast mr-1.5 animate-bounce"></i>Out for Delivery
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-neutral-400 hover:text-white transition-colors p-1"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-neutral-900/30 transition-colors">
+                            <td class="px-6 py-4 font-mono font-medium text-blue-400">#AQP-9020</td>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white">Ananya Mishra</div>
+                                <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>Sriram Nagar, Phase 2</div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-neutral-200">2 Jars (20L)</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="h-7 w-7 rounded-full bg-neutral-800 flex items-center justify-center text-xs text-neutral-300 border border-neutral-700">DM</div>
+                                    <span class="text-neutral-300 font-medium">Deepak Mohanty</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <i class="fa-solid fa-circle-check mr-1.5"></i>progressing well
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="text-neutral-400 hover:text-white transition-colors p-1"><i class="fa-solid fa-ellipsis-vertical text-lg"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Dispatch Order Modal -->
+    <div id="orderModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="apple-blur w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl p-6 space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-semibold text-white">New Dispatch Allocation</h3>
+                <button onclick="toggleOrderModal()" class="text-neutral-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form class="space-y-4" id="dispatchForm" onsubmit="handleFormSubmit(event)">
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
+                    <input type="text" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
+                    <textarea required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local landmark and address"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Quantity (20L Jars)</label>
+                        <input type="number" required min="1" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Number of jars">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
+                        <select class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            <option value="Rahul Sharma">Rahul Sharma</option>
+                            <option value="Deepak Mohanty">Deepak Mohanty</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
+                    Deploy Order to Rider App
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleOrderModal() {
+            const modal = document.getElementById('orderModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            // Implement logic to add to Firestore data nodes here
+            alert('Order successfully deployed to the delivery workforce live pool!');
+            toggleOrderModal();
+        }
+    </script>
+</body>
+</html>
