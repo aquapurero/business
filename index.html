@@ -49,6 +49,23 @@
 
         <!-- Form Architecture -->
         <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+            
+            <!-- Profile Picture Upload Area (Only visible on Sign Up) -->
+            <div id="avatar-container" class="hidden flex flex-col items-center justify-center space-y-2 pb-2">
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400">Profile Picture</label>
+                <div class="relative group cursor-pointer">
+                    <input type="file" id="avatar-input" accept="image/*" class="hidden" onchange="previewAndCompressAvatar(event)">
+                    <div onclick="document.getElementById('avatar-input').click()" class="h-24 w-24 rounded-full border-2 border-dashed border-neutral-700 bg-neutral-900/50 flex items-center justify-center overflow-hidden hover:border-blue-500 transition-all relative">
+                        <img id="avatar-preview" src="" class="hidden h-full w-full object-cover">
+                        <div id="avatar-placeholder" class="text-center flex flex-col items-center justify-center text-neutral-500 group-hover:text-neutral-300">
+                            <i class="fa-solid fa-camera text-xl mb-1"></i>
+                            <span class="text-[10px]">Upload</span>
+                        </div>
+                    </div>
+                </div>
+                <p id="compress-status" class="text-[11px] text-emerald-400 hidden"><i class="fa-solid fa-circle-check"></i> Image Compressed Successfully</p>
+            </div>
+
             <div>
                 <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Username</label>
                 <div class="relative">
@@ -96,24 +113,86 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         let mode = 'signin';
+        let compressedAvatarBase64 = ""; // Will hold the compressed image string
 
         window.switchAuthMode = function(targetMode) {
             mode = targetMode;
             const btnSignin = document.getElementById('tab-signin');
             const btnSignup = document.getElementById('tab-signup');
             const roleContainer = document.getElementById('role-container');
+            const avatarContainer = document.getElementById('avatar-container');
             const submitBtn = document.getElementById('submit-btn');
+
+            // Reset image states when switching tabs
+            compressedAvatarBase64 = "";
+            document.getElementById('avatar-preview').classList.add('hidden');
+            document.getElementById('avatar-placeholder').classList.remove('hidden');
+            document.getElementById('compress-status').classList.add('hidden');
+            document.getElementById('avatar-input').value = "";
 
             if (mode === 'signup') {
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.remove('hidden');
+                avatarContainer.classList.remove('hidden');
                 submitBtn.innerText = "Register System Account";
             } else {
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.add('hidden');
+                avatarContainer.classList.add('hidden');
                 submitBtn.innerText = "Authenticate Session";
+            }
+        }
+
+        // Auto Compression Algorithm (Resizes to max 300x300 and lowers JPEG quality)
+        window.previewAndCompressAvatar = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set square crop dimensions for standard user profiles
+                    const maxSize = 300; 
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to JPEG with 0.7 quality (Best balance of quality and file size)
+                    compressedAvatarBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                    // Update UI Previews
+                    const preview = document.getElementById('avatar-preview');
+                    const placeholder = document.getElementById('avatar-placeholder');
+                    const status = document.getElementById('compress-status');
+
+                    preview.src = compressedAvatarBase64;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    status.classList.remove('hidden');
+                }
             }
         }
 
@@ -128,17 +207,18 @@
             const userDocRef = doc(db, "aquapure_users", usernameInput);
 
             if (mode === 'signup') {
-                // Check if account already exists
                 const snap = await getDoc(userDocRef);
                 if(snap.exists()){
                     alert("This username is already taken!");
                     return;
                 }
-                // Write profile to database node securely
+                
+                // Saving user details with compressed profile picture string inside Firebase
                 await setDoc(userDocRef, {
                     username: usernameInput,
-                    password: passwordInput, // System architecture configuration
-                    role: roleInput
+                    password: passwordInput, 
+                    role: roleInput,
+                    avatar: compressedAvatarBase64 || null // Saves base64 string directly inside document
                 });
                 alert("Account successfully provisioned! Please sign in.");
                 switchAuthMode('signin');
@@ -151,8 +231,14 @@
                 }
                 const userData = snap.data();
                 if(userData.password === passwordInput) {
-                    // Route to matching operational viewport matrix
                     localStorage.setItem('active_user', userData.username);
+                    // Optional: Store profile image in localStorage to use inside admin.html or staff.html
+                    if (userData.avatar) {
+                        localStorage.setItem('active_user_avatar', userData.avatar);
+                    } else {
+                        localStorage.removeItem('active_user_avatar');
+                    }
+
                     if(userData.role === 'Admin') {
                         window.location.href = 'admin.html';
                     } else {
