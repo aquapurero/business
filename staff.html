@@ -129,7 +129,7 @@
 
     </main>
 
-    <!-- Navigation Tab Alternative (iOS style Bottom Bar) -->
+    <!-- Navigation Bottom Bar Layout -->
     <div class="fixed bottom-0 inset-x-0 bg-[#0b0c10]/80 backdrop-blur-lg border-t border-neutral-900 py-2.5 flex justify-around items-center max-w-md mx-auto">
         <button class="flex flex-col items-center space-y-0.5 text-blue-500">
             <i class="fa-solid fa-route text-lg"></i>
@@ -163,7 +163,7 @@
         let unsubscribeTasks = null;
         let unsubscribeWallet = null;
 
-        // Dom Elements
+        // DOM Elements
         const punchInBtn = document.getElementById('punch-in-btn');
         const punchOutBtn = document.getElementById('punch-out-btn');
         const pipelineView = document.getElementById('pipeline-view');
@@ -173,7 +173,6 @@
         const shiftTimeDisplay = document.getElementById('shift-time-display');
         const walletDisplay = document.getElementById('wallet-display');
 
-        // Helper: Format date as YYYY-MM-DD local signature
         function getTodayString() {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -183,27 +182,31 @@
         const attendanceRef = doc(db, "rider_attendance", attendanceDocId);
         const riderProfileRef = doc(db, "riders", riderDocSlug);
 
-        // Listen for Wallet updates in real-time
+        // Real-Time Active Balance Sync
         function listenToWallet() {
             if (unsubscribeWallet) unsubscribeWallet();
             
             unsubscribeWallet = onSnapshot(riderProfileRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const balance = data.walletBalance || 0;
+                    let balance = data.walletBalance;
+                    
+                    // Fail-safe handling for missing or legacy string parameters
+                    if (balance === undefined || balance === null) balance = 0;
+                    if (typeof balance === 'string') balance = parseFloat(balance) || 0;
+                    
                     walletDisplay.innerText = Number(balance).toFixed(2);
                 } else {
                     walletDisplay.innerText = "0.00";
                 }
             }, (error) => {
-                console.error("Wallet stream error:", error);
+                console.error("Wallet snapshot structural connection error:", error);
             });
         }
 
-        // Check Initial Attendance Status for today
+        // Setup Checkpoint
         async function checkAttendanceState() {
             try {
-                // Initialize balance listener immediately so it displays right away
                 listenToWallet();
 
                 const docSnap = await getDoc(attendanceRef);
@@ -217,7 +220,7 @@
                     }
                 }
             } catch (err) {
-                console.error("Error reading attendance checkpoint:", err);
+                console.error("Initialization check error:", err);
             }
         }
 
@@ -248,7 +251,7 @@
             }
         }
 
-        // Action Trigger: Punch In & Credit Wallet
+        // Action Trigger: Punch In with Explicit Type Normalization Engine
         punchInBtn.addEventListener('click', async () => {
             const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             punchInBtn.disabled = true;
@@ -257,7 +260,7 @@
                 const initialCheck = await getDoc(attendanceRef);
                 
                 if (!initialCheck.exists()) {
-                    // 1. Write Daily Attendance Record Block
+                    // 1. Log Attendance Record
                     await setDoc(attendanceRef, {
                         rider: currentRider,
                         date: getTodayString(),
@@ -266,9 +269,20 @@
                         timestamp: new Date()
                     }, { merge: true });
 
-                    // 2. Safe Atomic Increment: Credit ₹250 directly to rider's running balance profile
+                    // 2. Fetch profile doc to check configuration states safely
+                    const riderSnap = await getDoc(riderProfileRef);
+                    let baseBalance = 0;
+
+                    if (riderSnap.exists()) {
+                        const rData = riderSnap.data();
+                        if (rData.walletBalance !== undefined && rData.walletBalance !== null) {
+                            baseBalance = typeof rData.walletBalance === 'string' ? parseFloat(rData.walletBalance) || 0 : rData.walletBalance;
+                        }
+                    }
+
+                    // 3. Precise Clean Sync: Update or overwrite field natively to guarantee true arithmetic balance updates
                     await setDoc(riderProfileRef, {
-                        walletBalance: increment(250),
+                        walletBalance: baseBalance + 250,
                         lastCreditReason: "Daily Punch In Bonus",
                         lastCreditTime: new Date()
                     }, { merge: true });
@@ -277,12 +291,11 @@
                 setUIOnline(timeString);
                 listenToLiveTasks();
             } catch (error) {
-                console.error("Punch In / Credit operations failed:", error);
+                console.error("Punch In execution sequence error:", error);
                 punchInBtn.disabled = false;
             }
         });
 
-        // Action Trigger: Punch Out
         punchOutBtn.addEventListener('click', async () => {
             const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             punchOutBtn.disabled = true;
@@ -291,18 +304,14 @@
                 await updateDoc(attendanceRef, {
                     punchOut: timeString
                 });
-                
-                if (unsubscribeTasks) {
-                    unsubscribeTasks();
-                }
+                if (unsubscribeTasks) unsubscribeTasks();
                 setUIOffline(null, timeString);
             } catch (error) {
-                console.error("Punch Out failed:", error);
+                console.error("Punch Out sync failure:", error);
                 punchOutBtn.disabled = false;
             }
         });
 
-        // Listen for assigned tasks in real-time
         function listenToLiveTasks() {
             const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
             
@@ -379,7 +388,6 @@
             });
         }
 
-        // Global status updater binding across dynamic loops
         window.updateDeliveryStatus = async function(docId, buttonElement) {
             buttonElement.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Updating Sync...</span>`;
             try {
@@ -393,7 +401,6 @@
             }
         };
 
-        // Initialize state engine check
         checkAttendanceState();
     </script>
 </body>
