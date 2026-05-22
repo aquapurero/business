@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure - Core Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #0f172a, #000000);
+            color: #f5f5f7;
+        }
+        .apple-blur {
+            background: rgba(22, 22, 23, 0.75);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gradient-btn {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 114, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md apple-blur rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <!-- Logo -->
+        <div class="text-center space-y-2">
+            <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg mx-auto">
+                <i class="fa-solid fa-droplet text-white text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-white mt-4">AquaPure Terminal</h1>
+            <p class="text-sm text-neutral-400">Access your water supply operations engine</p>
+        </div>
+
+        <!-- Dynamic Tabs -->
+        <div class="flex bg-neutral-900/60 p-1 rounded-xl border border-neutral-800">
+            <button id="tab-signin" onclick="switchAuthMode('signin')" class="w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all">Sign In</button>
+            <button id="tab-signup" onclick="switchAuthMode('signup')" class="w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all">Sign Up</button>
+        </div>
+
+        <!-- Form Architecture -->
+        <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Username</label>
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
+                    <input type="text" id="username" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Enter username">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Password</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
+                    <input type="password" id="password" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••">
+                </div>
+            </div>
+
+            <div id="role-container" class="hidden">
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Account Profile Role</label>
+                <select id="role" class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                    <option value="Staff">Staff / Delivery Rider</option>
+                    <option value="Admin">System Administrator</option>
+                </select>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full gradient-btn text-white font-medium py-3.5 rounded-xl mt-2 shadow-lg">
+                Authenticate Session
+            </button>
+        </form>
+    </div>
+
+    <!-- Firebase Integration Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let mode = 'signin';
+
+        window.switchAuthMode = function(targetMode) {
+            mode = targetMode;
+            const btnSignin = document.getElementById('tab-signin');
+            const btnSignup = document.getElementById('tab-signup');
+            const roleContainer = document.getElementById('role-container');
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (mode === 'signup') {
+                btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
+                btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
+                roleContainer.classList.remove('hidden');
+                submitBtn.innerText = "Register System Account";
+            } else {
+                btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
+                btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
+                roleContainer.classList.add('hidden');
+                submitBtn.innerText = "Authenticate Session";
+            }
+        }
+
+        window.handleAuth = async function(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('username').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('password').value;
+            const roleInput = document.getElementById('role').value;
+
+            if (!usernameInput || !passwordInput) return;
+
+            const userDocRef = doc(db, "aquapure_users", usernameInput);
+
+            if (mode === 'signup') {
+                // Check if account already exists
+                const snap = await getDoc(userDocRef);
+                if(snap.exists()){
+                    alert("This username is already taken!");
+                    return;
+                }
+                // Write profile to database node securely
+                await setDoc(userDocRef, {
+                    username: usernameInput,
+                    password: passwordInput, // System architecture configuration
+                    role: roleInput
+                });
+                alert("Account successfully provisioned! Please sign in.");
+                switchAuthMode('signin');
+            } else {
+                // Sign In Process
+                const snap = await getDoc(userDocRef);
+                if(!snap.exists()) {
+                    alert("User account terminal profile not found.");
+                    return;
+                }
+                const userData = snap.data();
+                if(userData.password === passwordInput) {
+                    // Route to matching operational viewport matrix
+                    localStorage.setItem('active_user', userData.username);
+                    if(userData.role === 'Admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'staff.html';
+                    }
+                } else {
+                    alert("Invalid security password credentials matrix.");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
