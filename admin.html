@@ -169,7 +169,8 @@
             <form class="space-y-4" id="dispatchForm">
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
-                    <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g. Suresh Jena">
+                    <input type="text" id="custName" list="customerSuggestions" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Type or choose customer...">
+                    <datalist id="customerSuggestions"></datalist>
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number</label>
@@ -201,7 +202,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -218,26 +219,73 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
+        const customersRef = collection(db, "aquapure_customers"); // Directory for unique customer profiles
+
+        let savedCustomers = {};
 
         function getTodayString() {
             const d = new Date();
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Handle Add Order Flow
+        // Live sync saved customer directories into the dropdown suggestion element
+        onSnapshot(customersRef, (snapshot) => {
+            const datalist = document.getElementById('customerSuggestions');
+            datalist.innerHTML = '';
+            savedCustomers = {};
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const nameKey = data.customerName.trim();
+                savedCustomers[nameKey] = data;
+
+                const option = document.createElement('option');
+                option.value = nameKey;
+                datalist.appendChild(option);
+            });
+        });
+
+        // Autofill logic when matching input value is tracked
+        document.getElementById('custName').addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (savedCustomers[val]) {
+                document.getElementById('custMobile').value = savedCustomers[val].mobileNumber || '';
+                document.getElementById('custAddress').value = savedCustomers[val].address || '';
+            }
+        });
+
+        // Handle Add Order Flow & Customer Save Routine
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            const name = document.getElementById('custName').value.trim();
+            const mobile = document.getElementById('custMobile').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const qty = parseInt(document.getElementById('custQty').value) || 0;
+            const assignedRider = document.getElementById('riderSelect').value;
+
             try {
+                // 1. Queue core dispatch document
                 await addDoc(ordersRef, {
                     orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
-                    customerName: document.getElementById('custName').value,
-                    mobileNumber: document.getElementById('custMobile').value,
-                    address: document.getElementById('custAddress').value,
-                    quantity: parseInt(document.getElementById('custQty').value) || 0,
-                    rider: document.getElementById('riderSelect').value,
+                    customerName: name,
+                    mobileNumber: mobile,
+                    address: address,
+                    quantity: qty,
+                    rider: assignedRider,
                     status: "Pending",
                     timestamp: serverTimestamp()
                 });
+
+                // 2. Index profile dynamically to skip future re-typing work
+                const customerSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                await setDoc(doc(db, "aquapure_customers", customerSlug), {
+                    customerName: name,
+                    mobileNumber: mobile,
+                    address: address,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+
                 document.getElementById('dispatchForm').reset();
                 window.toggleOrderModal();
             } catch (error) {
@@ -245,7 +293,6 @@
             }
         });
 
-        // Globalized System Actions for Security Deletions and updates
         window.deleteOrderRecord = async function(docId) {
             if(confirm("Are you sure you want to delete this dispatch order permanently?")) {
                 try {
@@ -272,7 +319,6 @@
             }
         };
 
-        // Real-Time Matrix Listener merging Attendance with Wallet Balances
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
@@ -370,7 +416,6 @@
             });
         }
 
-        // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
             const tbody = document.getElementById('order-table-body');
             if(!tbody) return;
