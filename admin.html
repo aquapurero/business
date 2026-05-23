@@ -233,6 +233,12 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
+        // Helper function to capitalize names (e.g., abinashhhhhh -> Abinashhhhhh)
+        function formatToTitleCase(str) {
+            if (!str) return '';
+            return str.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+        }
+
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
@@ -338,7 +344,7 @@
         };
 
         window.triggerPasswordUpdate = async function(riderSlug) {
-            const newPassword = prompt(`Enter new application password for ${riderSlug.replace('_', ' ')}:`);
+            const newPassword = prompt(`Enter new application password for ${formatToTitleCase(riderSlug)}:`);
             if (newPassword && newPassword.trim().length > 0) {
                 try {
                     const profileRef = doc(db, "riders", riderSlug);
@@ -388,7 +394,7 @@
             });
 
             const targetAgents = Object.keys(localRiderWallets).map(slug => ({
-                name: slug.replace(/_/g, ' '),
+                name: formatToTitleCase(slug),
                 slug: slug
             }));
 
@@ -462,7 +468,7 @@
             riderSelect.innerHTML = '<option value="">Select a Rider</option>';
             
             Object.keys(localRiderWallets).forEach(slug => {
-                const displayName = slug.replace(/_/g, ' ');
+                const displayName = formatToTitleCase(slug);
                 const option = document.createElement('option');
                 option.value = displayName;
                 option.textContent = displayName;
