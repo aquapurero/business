@@ -366,41 +366,35 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
         });
 
         function listenToLiveTasks() {
-    // 1. Query se filter hata diya (sab orders utha rahe hain)
-    const q = query(collection(db, "aquapure_orders"));
-    
-    unsubscribeTasks = onSnapshot(q, (snapshot) => {
-        const container = document.getElementById('task-container');
-        container.innerHTML = '';
-        
-        let activeTasks = 0;
-        let finishedTasks = 0;
-        let hasTask = false;
-
-        // 2. JavaScript mein loop chala kar check karenge
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
+            const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
             
-            // Yahan comparison ko strict banaya (Case Insensitive)
-            const riderInDb = (data.rider || "").trim().toLowerCase();
-            const myName = currentRider.trim().toLowerCase();
+            unsubscribeTasks = onSnapshot(q, (snapshot) => {
+                const container = document.getElementById('task-container');
+                container.innerHTML = '';
+                console.log("Searching for rider:", currentRider, "Found count:", snapshot.size);
+                let activeTasks = 0;
+                let finishedTasks = 0;
 
-            if (riderInDb === myName) {
-                hasTask = true;
-                const docId = docSnap.id;
-                const phoneNum = data.mobileNumber || '';
-                
-                const jarQty = parseInt(data.quantity) || 0;
-                const totalBillAmount = jarQty * RATE_PER_JAR;
-
-                if (data.status !== 'progressing well') {
-                    activeTasks++;
-                } else {
-                    finishedTasks++;
+                if(snapshot.empty) {
+                    container.innerHTML = `<p class="text-center text-neutral-500 py-8 text-xs font-medium">No dispatches allocated for you today.</p>`;
+                    document.getElementById('pending-count').innerText = "0";
+                    document.getElementById('metrics-delivered').innerText = "0 Done";
+                    return;
                 }
 
-                // ... (Aapka baki ka card generation wala code yahan se start hoga)
-                // Note: niche baki code change nahi karna hai, bas loop ke andar ye logic rakhna hai
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+                    const phoneNum = data.mobileNumber || '';
+                    
+                    const jarQty = parseInt(data.quantity) || 0;
+                    const totalBillAmount = jarQty * RATE_PER_JAR;
+
+                    if (data.status !== 'progressing well') {
+                        activeTasks++;
+                    } else {
+                        finishedTasks++;
+                    }
 
                     let operationalLayout = '';
                     if (data.status === 'Pending' || data.status === 'Out for Delivery') {
