@@ -374,19 +374,26 @@
         });
 
         function refreshRiderRosterLayout() {
-            const rosterStack = document.getElementById('attendance-roster-stack');
-            if(!rosterStack) return;
-            rosterStack.innerHTML = '';
+    const rosterStack = document.getElementById('attendance-roster-stack');
+    if(!rosterStack) return;
+    rosterStack.innerHTML = '';
 
-            const activeRidersInLogs = {};
-            currentAttendanceData.forEach(data => {
-                activeRidersInLogs[data.rider] = data;
-            });
+    // Step: LocalRiderWallets se saare riders ki list banao
+    const allRiders = Object.keys(localRiderWallets); 
 
-            const targetAgents = [
-                { name: "Rahul Sharma", slug: "Rahul_Sharma" },
-                { name: "Deepak Mohanty", slug: "Deepak_Mohanty" }
-            ];
+    allRiders.forEach(slug => {
+        const agentName = slug.replace('_', ' ');
+        const logData = currentAttendanceData.find(d => d.rider === agentName);
+        const walletDoc = localRiderWallets[slug] || {};
+        
+        let balanceAmount = walletDoc.walletBalance || 0;
+        // ... (Baaki code waisa hi rahega) ...
+        
+        // UI render code...
+        const itemHtml = `...`; 
+        rosterStack.innerHTML += itemHtml;
+    });
+}
 
             targetAgents.forEach(agent => {
                 const logData = activeRidersInLogs[agent.name];
