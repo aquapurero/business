@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -194,8 +195,10 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                      <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-    </select>
+                        <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                            <option value="Rahul Sharma">Rahul Sharma</option>
+                            <option value="Deepak Mohanty">Deepak Mohanty</option>
+                        </select>
                     </div>
                 </div>
                 <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
@@ -374,26 +377,19 @@
         });
 
         function refreshRiderRosterLayout() {
-    const rosterStack = document.getElementById('attendance-roster-stack');
-    if(!rosterStack) return;
-    rosterStack.innerHTML = '';
+            const rosterStack = document.getElementById('attendance-roster-stack');
+            if(!rosterStack) return;
+            rosterStack.innerHTML = '';
 
-    // Step: LocalRiderWallets se saare riders ki list banao
-    const allRiders = Object.keys(localRiderWallets); 
+            const activeRidersInLogs = {};
+            currentAttendanceData.forEach(data => {
+                activeRidersInLogs[data.rider] = data;
+            });
 
-    allRiders.forEach(slug => {
-        const agentName = slug.replace('_', ' ');
-        const logData = currentAttendanceData.find(d => d.rider === agentName);
-        const walletDoc = localRiderWallets[slug] || {};
-        
-        let balanceAmount = walletDoc.walletBalance || 0;
-        // ... (Baaki code waisa hi rahega) ...
-        
-        // UI render code...
-        const itemHtml = `...`; 
-        rosterStack.innerHTML += itemHtml;
-    });
-}
+            const targetAgents = [
+                { name: "Rahul Sharma", slug: "Rahul_Sharma" },
+                { name: "Deepak Mohanty", slug: "Deepak_Mohanty" }
+            ];
 
             targetAgents.forEach(agent => {
                 const logData = activeRidersInLogs[agent.name];
@@ -525,20 +521,6 @@
         window.toggleOrderModal = function() {
             document.getElementById('orderModal').classList.toggle('hidden');
         };
-        
-        // Rider list ko automatic sync karne ka code
-onSnapshot(ridersRef, (snapshot) => {
-    const riderSelect = document.getElementById('riderSelect');
-    riderSelect.innerHTML = ''; // Purane options saaf karo
-    
-    snapshot.forEach((doc) => {
-        const riderName = doc.id.replace('_', ' '); // Slug se naam wapas banao
-        const option = document.createElement('option');
-        option.value = riderName;
-        option.textContent = riderName;
-        riderSelect.appendChild(option);
-    });
-});
     </script>
 </body>
 </html>
