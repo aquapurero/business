@@ -183,11 +183,11 @@
 // LocalStorage se login kiya hua naam uthao
 const loggedInUser = localStorage.getItem('active_user') || "Guest";
 
-// Dynamic format ko read karne ke baad hardcoded accurate check fallback laga diya
-let currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); 
+// Strict Fallback: Agar login username me 'rahul' hai, toh direct database wala exact name load karein
+let currentRider = "Rahul Sharma"; 
 
-if (currentRider.toLowerCase().includes("rahul")) {
-    currentRider = "Rahul Sharma"; // Agar user rahul hai toh exact database matching name force karein
+if (loggedInUser !== "Guest" && !loggedInUser.toLowerCase().includes("rahul")) {
+    currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
 const riderDocSlug = loggedInUser; 
