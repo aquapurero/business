@@ -378,16 +378,80 @@ onSnapshot(ridersRef, (walletSnapshot) => {
         });
 
         function refreshRiderRosterLayout() {
-            const rosterStack = document.getElementById('attendance-roster-stack');
-            if(!rosterStack) return;
-            rosterStack.innerHTML = '';
+    const rosterStack = document.getElementById('attendance-roster-stack');
+    if (!rosterStack) return;
+    rosterStack.innerHTML = '';
 
-                        const activeRidersInLogs = {};
-            currentAttendanceData.forEach(data => {
-                // Naam ko lower case karke map mein save karo
-                const cleanName = (data.rider || "").toLowerCase().trim();
-                activeRidersInLogs[cleanName] = data;
-            });
+    const activeRidersInLogs = {};
+    currentAttendanceData.forEach(data => {
+        const cleanName = (data.rider || "").toLowerCase().trim();
+        activeRidersInLogs[cleanName] = data;
+    });
+
+    const targetAgents = Object.keys(localRiderWallets).map(slug => ({
+        name: slug.replace(/_/g, ' '),
+        slug: slug
+    }));
+
+    targetAgents.forEach(agent => {
+        const agentNameLower = agent.name.toLowerCase().trim();
+        const logData = activeRidersInLogs[agentNameLower];
+        const walletDoc = localRiderWallets[agent.slug] || {};
+        
+        // Profile Picture Logic
+        // Agar database mein 'avatarUrl' hai toh wo use karein, warna UI-Avatars se generate karein
+        const avatarUrl = walletDoc.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.name)}&background=0072ff&color=fff&size=128`;
+
+        let balanceAmount = parseFloat(walletDoc.walletBalance) || 0;
+        
+        let statusBadge = '';
+        let dutyTimingText = '';
+
+        if (!logData) {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-neutral-700 bg-neutral-900 text-neutral-400 font-medium">Off Duty</span>`;
+            dutyTimingText = `<div class="text-neutral-500 text-xs">No shift recorded today.</div>`;
+        } else if (logData.punchIn && !logData.punchOut) {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-medium animate-pulse">Active</span>`;
+            dutyTimingText = `
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div><span class="text-neutral-500 block text-[10px] uppercase">In</span><span class="text-emerald-400 font-mono">${logData.punchIn}</span></div>
+                    <div><span class="text-neutral-500 block text-[10px] uppercase">Out</span><span class="text-neutral-600 font-mono">--:--</span></div>
+                </div>
+            `;
+        } else {
+            statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium">Completed</span>`;
+            dutyTimingText = `
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div><span class="text-neutral-500 block text-[10px] uppercase">In</span><span class="text-neutral-400 font-mono">${logData.punchIn}</span></div>
+                    <div><span class="text-neutral-500 block text-[10px] uppercase">Out</span><span class="text-rose-400 font-mono">${logData.punchOut}</span></div>
+                </div>
+            `;
+        }
+
+        const itemHtml = `
+            <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-4 space-y-3.5">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="h-9 w-9 rounded-full border border-neutral-700 overflow-hidden shadow-lg">
+                            <img src="${avatarUrl}" class="h-full w-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=Rider'">
+                        </div>
+                        <span class="text-sm font-semibold text-white">${agent.name}</span>
+                    </div>
+                    ${statusBadge}
+                </div>
+                ${dutyTimingText}
+                <div class="pt-2 border-t border-neutral-800/60 flex items-center justify-between">
+                    <div class="flex items-center space-x-1.5 text-xs text-neutral-400">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span>Wallet: <span class="font-bold text-white font-mono">₹${balanceAmount.toFixed(2)}</span></span>
+                    </div>
+                    <button onclick="window.triggerPasswordUpdate('${agent.slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium">Update Key</button>
+                </div>
+            </div>
+        `;
+        rosterStack.innerHTML += itemHtml;
+    });
+}
 
             // Is code ko line 389 se 392 ki jagah lagayein
 const targetAgents = Object.keys(localRiderWallets).map(slug => ({
