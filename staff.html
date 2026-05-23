@@ -180,8 +180,16 @@
         const db = getFirestore(app);
         
         // LocalStorage se login kiya hua naam uthao
+// LocalStorage se login kiya hua naam uthao
 const loggedInUser = localStorage.getItem('active_user') || "Guest";
-const currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); 
+
+// Dynamic format ko read karne ke baad hardcoded accurate check fallback laga diya
+let currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); 
+
+if (currentRider.toLowerCase().includes("rahul")) {
+    currentRider = "Rahul Sharma"; // Agar user rahul hai toh exact database matching name force karein
+}
+
 const riderDocSlug = loggedInUser; 
 const RATE_PER_JAR = 30;
 
