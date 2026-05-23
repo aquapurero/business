@@ -407,9 +407,12 @@
                     let formattedPhone = customerMobile.replace(/\D/g, '');
                     if(formattedPhone.length === 10) formattedPhone = "91" + formattedPhone; 
 
-                    const templateMessage = `💧 *AquaPure Delivery Update* 💧%0A%0AHello *${customerName}*, your water supply order *#${orderId}* is out for delivery!%0A%0A🚚 *Rider Name:* ${riderDisplayName}%0A📱 *Rider Mobile:* ${riderMobileId}%0A%0AOur rider is on the way. Thank you for choosing AquaPure!`;
-                    const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${templateMessage}`;
-                    window.open(waUrl, '_blank');
+                    // Purane code ki jagah ye likhein:
+const templateMessage = `💧 *AquaPure Delivery Update* 💧\n\nHello *${customerName}*, your water supply order *#${orderId}* is out for delivery!\n\n🚚 *Rider Name:* ${riderDisplayName}\n📱 *Rider Mobile:* ${riderMobileId}\n\nOur rider is on the way. Thank you for choosing AquaPure!`;
+
+const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(templateMessage)}`;
+window.open(waUrl, '_blank');
+
                 }
             } catch(err) {
                 console.error(err);
