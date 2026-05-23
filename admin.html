@@ -194,7 +194,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                       <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                       <select id="riderSelect" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
                        </select>
                     </div>
                 </div>
@@ -305,19 +305,40 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
+        // FIXED DISPATCH SUBMISSION FOR RIDER APP SYNC
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
+                const selectedRiderValue = document.getElementById('riderSelect').value;
+                
+                // Extracting clean mobile number and rider name from string "9090580555 (Apu)"
+                let cleanRiderMobile = "";
+                let cleanRiderName = "";
+                
+                if (selectedRiderValue.includes('(')) {
+                    cleanRiderMobile = selectedRiderValue.split(' ')[0].trim();
+                    cleanRiderName = selectedRiderValue.substring(selectedRiderValue.indexOf('(') + 1, selectedRiderValue.indexOf(')')).trim();
+                } else {
+                    cleanRiderMobile = selectedRiderValue.trim();
+                    cleanRiderName = "Rider";
+                }
+
                 await addDoc(ordersRef, {
                     orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
                     customerName: document.getElementById('custName').value.trim(),
                     mobileNumber: document.getElementById('custMobile').value.trim(),
                     address: document.getElementById('custAddress').value.trim(),
                     quantity: parseInt(document.getElementById('custQty').value) || 0,
-                    rider: document.getElementById('riderSelect').value,
                     status: "Pending",
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    
+                    // Added multi-layered routing keys so any type of staff page architecture fetches it successfully
+                    rider: selectedRiderValue, 
+                    riderMobile: cleanRiderMobile,
+                    riderName: cleanRiderName,
+                    assignedRider: cleanRiderMobile
                 });
+
                 document.getElementById('dispatchForm').reset();
                 window.toggleOrderModal();
             } catch (error) {
@@ -351,7 +372,6 @@
             }
         };
 
-        // NEW: DELETE RIDER PERMANENTLY FUNCTION
         window.deleteRiderRecord = async function(riderSlug, riderName) {
             if (confirm(`Warning: Are you sure you want to completely remove ${riderName} (${riderSlug}) from the database? This cannot be undone.`)) {
                 try {
@@ -401,7 +421,6 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 
-                // CRITICAL FIX: Explicitly targeting 'name' property fields as shown in signup snapshot
                 let displayName = walletDoc.name || walletDoc.displayName || "";
                 displayName = displayName.trim();
                 
@@ -439,8 +458,6 @@
                 }
 
                 const agentInitial = String(displayName).substring(0, 2).toUpperCase();
-                
-                // MATCHED REQUEST FORMAT: 9090580555 (Apu)
                 const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${displayName})</span>`;
 
                 const itemHtml = `
@@ -492,7 +509,6 @@
                     displayName = "Rider";
                 }
                 
-                // ALLOCATED SYNC FORMAT: 9090580555 (Apu)
                 const selectValueAndLabel = `${slug} (${displayName})`;
                 
                 const option = document.createElement('option');
