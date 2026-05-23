@@ -386,10 +386,11 @@
                 activeRidersInLogs[data.rider] = data;
             });
 
-            const targetAgents = [
-                { name: "Rahul Sharma", slug: "Rahul_Sharma" },
-                { name: "Deepak Mohanty", slug: "Deepak_Mohanty" }
-            ];
+            // Is code ko line 389 se 392 ki jagah lagayein
+const targetAgents = Object.keys(localRiderWallets).map(slug => ({
+    name: slug.replace(/_/g, ' '),
+    slug: slug
+}));
 
             targetAgents.forEach(agent => {
                 const logData = activeRidersInLogs[agent.name];
