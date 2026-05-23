@@ -388,13 +388,16 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 
-                // CRITICAL FIX: If database name is missing, fallback cleanly without recursive duplicate mapping
-                let riderName = walletDoc.name ? walletDoc.name.trim() : "";
-                if (!riderName || riderName === slug) {
-                    riderName = "Rider";
+                // ABSOLUTE FIX: Pulling registration fields directly from document fields
+                let displayName = walletDoc.displayName || walletDoc.name || "";
+                displayName = displayName.trim();
+                
+                // Clean Fallback checks to stop raw loops
+                if (!displayName || displayName === slug) {
+                    displayName = "Rider";
                 }
                 
-                const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(riderName).toLowerCase().trim());
+                const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(displayName).toLowerCase().trim());
                 
                 let balanceAmount = walletDoc.walletBalance || 0;
                 if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
@@ -423,10 +426,11 @@
                     `;
                 }
 
-                const agentInitial = String(riderName).substring(0, 2).toUpperCase();
+                // Generates initial correctly (e.g., Apu -> AP, Semaaa -> SE)
+                const agentInitial = String(displayName).substring(0, 2).toUpperCase();
                 
-                // FORMATTED STRICT AS REQUESTED: 9090580555 (Apu)
-                const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${riderName})</span>`;
+                // PARSED FIXED DISPLAY FORMAT: 9090580555 (Apu)
+                const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${displayName})</span>`;
 
                 const itemHtml = `
                     <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-4 space-y-3.5">
@@ -465,13 +469,15 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 
-                let riderName = walletDoc.name ? walletDoc.name.trim() : "";
-                if (!riderName || riderName === slug) {
-                    riderName = "Rider";
+                let displayName = walletDoc.displayName || walletDoc.name || "";
+                displayName = displayName.trim();
+                
+                if (!displayName || displayName === slug) {
+                    displayName = "Rider";
                 }
                 
-                // DROPDOWN OPTION FORMAT FIXED: 9090580555 (Apu)
-                const selectValueAndLabel = `${slug} (${riderName})`;
+                // DROPDOWN STRICT FORMAT FIX: 9090580555 (Apu)
+                const selectValueAndLabel = `${slug} (${displayName})`;
                 
                 const option = document.createElement('option');
                 option.value = selectValueAndLabel;
