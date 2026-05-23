@@ -447,18 +447,34 @@
             });
         }
 
-        window.updateDeliveryStatus = async function(docId, buttonElement) {
+                window.updateDeliveryStatus = async function(docId, buttonElement) {
             buttonElement.disabled = true;
             buttonElement.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin text-xs"></i>`;
+            
             try {
-                const docRef = doc(db, "aquapure_orders", docId);
-                await updateDoc(docRef, {
+                // 1. Order details fetch karein taaki WhatsApp pe bill bhejein
+                const orderRef = doc(db, "aquapure_orders", docId);
+                const orderSnap = await getDoc(orderRef);
+                const data = orderSnap.data();
+                
+                const jarQty = parseInt(data.quantity) || 0;
+                const totalAmount = jarQty * RATE_PER_JAR;
+
+                // 2. Database update karein
+                await updateDoc(orderRef, {
                     status: "progressing well"
                 });
+
+                // 3. WhatsApp Message generate karein
+                const msg = `✅ *AquaPure Order Delivered*\n\nHello ${data.customerName},\nYour order #${data.orderId || 'N/A'} has been delivered successfully.\n\n📦 *Quantity:* ${jarQty} Jars\n💰 *Total Amount:* ₹${totalAmount}\n\nThank you for choosing AquaPure!`;
+                
+                // 4. WhatsApp open karein
+                window.open(`https://wa.me/91${data.mobileNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+                
             } catch (error) {
                 console.error("Status sync failed:", error);
                 buttonElement.disabled = false;
-                buttonElement.innerHTML = `<span>Retry</span>`;
+                buttonElement.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>Mark Done</span>`;
             }
         };
 
