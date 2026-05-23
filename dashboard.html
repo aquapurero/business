@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure - Book Your Pure Water</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030712;
+            background-image: 
+                radial-gradient(at 0% 100%, rgba(14, 165, 233, 0.12) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0, transparent 50%);
+            color: #f3f4f6;
+        }
+        .tech-panel {
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        }
+        .neon-glow-btn {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .neon-glow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.6);
+            filter: brightness(1.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 10px;
+        }
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen custom-scrollbar pb-12">
+
+    <nav class="sticky top-0 z-50 tech-panel border-b border-gray-800/60 px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-droplet text-white text-lg"></i>
+            </div>
+            <div>
+                <span class="text-lg font-black tracking-wider text-white block">AQUAPURE</span>
+                <span class="text-[9px] text-sky-400 font-bold tracking-widest uppercase block mono-font">Instant Water Dispatch</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 bg-gray-950 px-3 py-1.5 rounded-xl border border-gray-800">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[10px] text-gray-400 font-medium tracking-wide uppercase">Booking Live</span>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <section class="lg:col-span-7 tech-panel rounded-2xl p-6 border border-gray-800/80 space-y-6 shadow-2xl">
+            <div>
+                <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                    <i class="fa-solid fa-cart-plus text-sky-400"></i> Place Water Dispatch Request
+                </h1>
+                <p class="text-xs text-gray-400 mt-1">Get high-quality 20L premium water jars delivered right to your doorstep.</p>
+            </div>
+
+            <form id="customerOrderForm" class="space-y-5" autocomplete="off">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 mono-font">Your Full Name</label>
+                    <input type="text" id="custName" required class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors" placeholder="Enter your full name">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 mono-font">Mobile Contact Signature</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-xs text-gray-500 font-medium">+91</span>
+                        <input type="tel" id="custMobile" required pattern="[0-9]{10}" class="w-full bg-gray-950 border border-gray-800 rounded-xl pl-12 pr-4 py-3 text-sm mono-font text-white focus:outline-none focus:border-sky-500 transition-colors" placeholder="10-digit smartphone number">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1.5 mono-font">Explicit Delivery Endpoint (Address)</label>
+                    <textarea id="custAddress" required rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition-colors placeholder:text-gray-700" placeholder="Flat No., Building, Street Name, Landmark..."></textarea>
+                </div>
+
+                <div class="bg-gray-950/60 p-4 rounded-xl border border-gray-900 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-200 uppercase tracking-wider mono-font">Jar Volume Counter</p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Standard 20 Litre Bubble-top Jars</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button type="button" onclick="modifyQty(-1)" class="h-9 w-9 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">-</button>
+                        <span id="qtyDisplay" class="text-lg font-black text-white mono-font w-6 text-center">1</span>
+                        <button type="button" onclick="modifyQty(1)" class="h-9 w-9 bg-gray-900 border border-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">+</button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/40 p-4 rounded-xl border border-gray-800/40 divide-y divide-gray-800/60 text-xs space-y-2">
+                    <div class="flex justify-between text-gray-400 pb-2">
+                        <span>Base Rate (Per Jar)</span>
+                        <span class="mono-font">₹30.00</span>
+                    </div>
+                    <div class="flex justify-between text-gray-400 py-2">
+                        <span>Delivery Fee</span>
+                        <span class="text-emerald-400 font-bold uppercase tracking-wider">FREE</span>
+                    </div>
+                    <div class="flex justify-between text-white font-bold pt-2 text-sm">
+                        <span>Total Payable Amount</span>
+                        <span class="text-sky-400 mono-font text-base" id="totalBillDisplay">₹30.00</span>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full neon-glow-btn text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl mt-2 block">
+                    <i class="fa-solid fa-paper-plane mr-1.5"></i> Confirm & Book Dispatch
+                </button>
+            </form>
+        </section>
+
+        <section class="lg:col-span-5 space-y-4">
+            <div class="tech-panel rounded-2xl p-5 border border-gray-800 space-y-4 shadow-2xl">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-white mono-font">Live Status Engine</h3>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Input number to trace active pipelines</p>
+                    </div>
+                    <div class="h-8 w-8 rounded-lg bg-gray-900 border border-gray-800 flex items-center justify-center text-sky-400">
+                        <i class="fa-solid fa-satellite-dish text-xs animate-pulse"></i>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="tel" id="searchMobile" max-length="10" class="flex-1 bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-xs mono-font text-white focus:outline-none focus:border-sky-500" placeholder="Enter registered 10-digit mobile...">
+                    <button onclick="startLiveTrackingStream()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-300 text-xs font-bold px-4 py-2.5 rounded-xl transition-all">
+                        Track
+                    </button>
+                </div>
+
+                <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar" id="personalLogsContainer">
+                    <div class="text-center py-10 text-gray-500 text-xs">
+                        <i class="fa-solid fa-magnifying-glass text-gray-700 mb-2 text-xl block"></i>
+                        No tracking stream initialised. Enter mobile to query nodes.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const ordersRef = collection(db, "aquapure_orders");
+
+        const RATE_PER_JAR = 30;
+        let currentJarCount = 1;
+        let trackingListenerUnsubscribe = null;
+
+        // Dynamic Quantity Updaters
+        window.modifyQty = function(val) {
+            currentJarCount += val;
+            if (currentJarCount < 1) currentJarCount = 1;
+            document.getElementById('qtyDisplay').innerText = currentJarCount;
+            document.getElementById('totalBillDisplay').innerText = `₹${(currentJarCount * RATE_PER_JAR).toFixed(2)}`;
+        };
+
+        // Post Entry Record to Server Channel
+        document.getElementById('customerOrderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            
+            try {
+                btn.disabled = true;
+                btn.innerText = "Transmitting Packet Node...";
+
+                const mobileNum = document.getElementById('custMobile').value.trim();
+
+                await addDoc(ordersRef, {
+                    orderId: "AQP-" + Math.floor(1000 + Math.random() * 9000),
+                    customerName: document.getElementById('custName').value.trim(),
+                    mobileNumber: mobileNum,
+                    address: document.getElementById('custAddress').value.trim(),
+                    quantity: parseInt(currentJarCount),
+                    status: "Pending",
+                    timestamp: serverTimestamp(),
+                    rider: "Unassigned",
+                    riderMobile: "",
+                    riderName: "",
+                    assignedRider: ""
+                });
+
+                alert("Success! Water dispatch sequence locked and deployed inside pipeline.");
+                
+                // Auto track the newly placed number
+                document.getElementById('searchMobile').value = mobileNum;
+                startLiveTrackingStream();
+                
+                // Reset form values
+                document.getElementById('customerOrderForm').reset();
+                currentJarCount = 1;
+                window.modifyQty(0);
+
+            } catch (err) {
+                console.error("Transmission Error Stack: ", err);
+                alert("Pipeline Fault. Connection dropped.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Confirm & Book Dispatch`;
+            }
+        });
+
+        // Initialize Realtime Listener for tracking specific customer
+        window.startLiveTrackingStream = function() {
+            const lookUpNumber = document.getElementById('searchMobile').value.trim();
+            const container = document.getElementById('personalLogsContainer');
+            
+            if(!lookUpNumber || lookUpNumber.length !== 10) {
+                alert("Please enter a valid 10-digit cellular signature node.");
+                return;
+            }
+
+            // Clean previous channel loop hook
+            if(trackingListenerUnsubscribe) trackingListenerUnsubscribe();
+
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500 text-xs">
+                    <i class="fa-solid fa-spinner animate-spin text-sky-400 mb-2 text-sm"></i>
+                    Querying network for entry packets...
+                </div>
+            `;
+
+            // Setup descending query loop for real-time customer feed matching mobile key
+            const trackingQuery = query(
+                ordersRef, 
+                where("mobileNumber", "==", lookUpNumber),
+                orderBy("timestamp", "desc")
+            );
+
+            trackingListenerUnsubscribe = onSnapshot(trackingQuery, (snapshot) => {
+                container.innerHTML = '';
+
+                if(snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500 text-xs">
+                            <i class="fa-solid fa-ban text-gray-700 mb-2 text-lg block"></i>
+                            No logged parameters found matching signature.
+                        </div>
+                    `;
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const jars = parseInt(data.quantity) || 0;
+                    
+                    let statusBadge = '';
+                    let borderHighlight = 'border-gray-800/80';
+                    
+                    if(data.status === 'Pending') {
+                        statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20"><i class="fa-solid fa-clock mr-1"></i>Hold</span>`;
+                    } else if(data.status === 'Out for Delivery') {
+                        statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-500/10 text-sky-400 border border-sky-500/20 animate-pulse"><i class="fa-solid fa-truck-fast mr-1"></i>Transit</span>`;
+                        borderHighlight = 'border-sky-500/30 shadow-md shadow-sky-500/5';
+                    } else if(data.status === 'progressing well') {
+                        statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1"></i>Delivered</span>`;
+                    }
+
+                    const cardHtml = `
+                        <div class="bg-gray-900/30 border ${borderHighlight} rounded-xl p-4 space-y-2.5 transition-all">
+                            <div class="flex justify-between items-center">
+                                <span class="font-mono font-bold text-sky-400 text-xs">${data.orderId || '#XXXX'}</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="text-xs text-gray-400 space-y-0.5">
+                                <p><span class="text-gray-600">Volume Payload:</span> <span class="text-gray-200 font-medium">${jars} Jars</span></p>
+                                <p><span class="text-gray-600">Total Matrix:</span> <span class="text-emerald-400 font-bold font-mono">₹${jars * RATE_PER_JAR}.00</span></p>
+                                <p class="truncate"><span class="text-gray-600">Endpoint:</span> <span class="text-gray-300 text-[11px]">${data.address}</span></p>
+                            </div>
+                            <div class="pt-1.5 border-t border-gray-900/60 flex items-center justify-between text-[11px]">
+                                <span class="text-gray-500">Agent Connection:</span>
+                                <span class="text-gray-300 font-medium">${data.riderName || 'Awaiting Routing Node'}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += cardHtml;
+                });
+            }, (error) => {
+                console.error("Realtime Tracking Engine Dropped:", error);
+                container.innerHTML = `<div class="text-center text-rose-400 text-xs py-4">Index Compilation pending. Defaulting tracking pipeline.</div>`;
+            });
+        };
+    </script>
+</body>
+</html>
