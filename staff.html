@@ -116,7 +116,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Session Reader Node
         const riderMobileId = localStorage.getItem('active_user');
         const riderDisplayName = localStorage.getItem('active_user_name') || 'Rider';
         const storedAvatar = localStorage.getItem('active_user_avatar');
@@ -135,6 +134,7 @@
 
         const ordersRef = collection(db, "aquapure_orders");
         const COMM_RATE_PER_JAR = 3; 
+        let isPunchedInToday = false; // State holder to keep check on attendance base allowance
 
         function getTodayString() {
             const d = new Date();
@@ -145,12 +145,13 @@
         const docSlug = `${riderMobileId}_${todayStr}`;
         const attDocRef = doc(db, "rider_attendance", docSlug);
 
-        // Attendance Listener
+        // Attendance Real-time Tracker
         onSnapshot(attDocRef, (docSnap) => {
             const container = document.getElementById('dutyStatusContainer');
             if(!container) return;
 
             if(!docSnap.exists()) {
+                isPunchedInToday = false;
                 container.innerHTML = `
                     <button onclick="window.triggerPunchIn()" class="bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-medium px-3.5 py-2 rounded-xl hover:bg-neutral-800 transition-all flex items-center space-x-1.5">
                         <span class="h-1.5 w-1.5 rounded-full bg-neutral-600 mr-0.5"></span>
@@ -161,6 +162,7 @@
             } else {
                 const data = docSnap.data();
                 if (data.punchIn && !data.punchOut) {
+                    isPunchedInToday = true;
                     container.innerHTML = `
                         <button onclick="window.triggerPunchOut()" class="bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-semibold px-3.5 py-2 rounded-xl hover:bg-emerald-500/20 transition-all flex items-center space-x-1.5">
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse mr-0.5"></span>
@@ -169,6 +171,7 @@
                         </button>
                     `;
                 } else if(data.punchOut) {
+                    isPunchedInToday = true; // True even if finished shift for rendering the base metric accurately
                     container.innerHTML = `
                         <div class="bg-neutral-900/80 border border-neutral-800/60 text-[11px] text-neutral-500 font-medium px-3 py-1.5 rounded-xl cursor-not-allowed">
                             Shift Ended (${data.punchOut})
@@ -178,12 +181,10 @@
             }
         });
 
-        // FIXED: PUNCH IN TRIGGER WITH AUTOMATIC 250 WALLET INCENTIVE
         window.triggerPunchIn = async function() {
             try {
                 const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
-                // 1. Attendance document logging
                 await setDoc(attDocRef, {
                     mobile: riderMobileId,
                     rider: riderDisplayName,
@@ -192,7 +193,6 @@
                     punchOut: null
                 }, { merge: true });
 
-                // 2. Automatically credit ₹250 into rider wallet balance profile
                 const walletProfileRef = doc(db, "riders", riderMobileId);
                 await updateDoc(walletProfileRef, {
                     walletBalance: increment(250)
@@ -228,12 +228,6 @@
             let combinedEarningsCalculated = 0;
             let sumTotalJarsDelivered = 0;
 
-            if(snapshot.empty) {
-                streamStack.innerHTML = `<div class="apple-blur rounded-2xl p-8 text-center text-neutral-500 text-sm">No dispatches allocated in cloud registry.</div>`;
-                updateMetricsUI(0, 0);
-                return;
-            }
-
             snapshot.forEach((orderDoc) => {
                 const data = orderDoc.data();
                 const docId = orderDoc.id;
@@ -258,12 +252,10 @@
                 }
 
                 let visualNodeIcon = '';
-                let nodeAccentBorder = '';
                 let pipelineActionBlock = '';
 
                 if(data.status === 'Pending') {
                     visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 z-10 relative"><i class="fa-solid fa-clock text-base"></i></div>`;
-                    nodeAccentBorder = `border-l-2 border-amber-500/40`;
                     pipelineActionBlock = `
                         <button onclick="window.updateOrderStatusNode('${docId}', 'Out for Delivery')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-truck-fast text-cyan-400"></i>
@@ -272,7 +264,6 @@
                     `;
                 } else if(data.status === 'Out for Delivery') {
                     visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 z-10 relative animate-pulse"><i class="fa-solid fa-truck-fast text-base"></i></div>`;
-                    nodeAccentBorder = `border-l-2 border-cyan-500/40`;
                     pipelineActionBlock = `
                         <button onclick="window.updateOrderStatusNode('${docId}', 'progressing well')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-xs font-bold text-white py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-transform flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-circle-check"></i>
@@ -281,7 +272,6 @@
                     `;
                 } else if(data.status === 'progressing well') {
                     visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 z-10 relative"><i class="fa-solid fa-circle-check text-base"></i></div>`;
-                    nodeAccentBorder = `border-l-2 border-neutral-900`;
                     pipelineActionBlock = `
                         <div class="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 text-center text-xs font-medium text-emerald-400/80 flex items-center justify-center space-x-1.5">
                             <i class="fa-solid fa-square-check"></i>
@@ -290,7 +280,7 @@
                     `;
                 }
 
-                // FIXED: CLICK-TO-CALL BUTTON INTERACTION LAYER ADDED
+                // UPDATED UI: Estimated Earnings line completely stripped out
                 const itemTemplate = `
                     <div class="flex items-start space-x-4">
                         ${visualNodeIcon}
@@ -302,7 +292,6 @@
                                 </div>
                                 <div class="text-right">
                                     <span class="text-xs font-bold text-neutral-200 block font-mono">${productVolume} x 20L Jars</span>
-                                    <span class="text-[10px] text-neutral-500 block mt-0.5">Est. Pay: ₹${productVolume * COMM_RATE_PER_JAR}</span>
                                 </div>
                             </div>
                             
@@ -365,8 +354,13 @@
             }
         };
 
+        // UPDATED METRICS UI: Updates the top bar panel to render base allowance dynamically
         function updateMetricsUI(earnings, totalJars) {
-            document.getElementById('rider-earnings').innerText = `₹${Number(earnings).toFixed(2)}`;
+            let totalDisplayEarnings = earnings;
+            if (isPunchedInToday) {
+                totalDisplayEarnings += 250; // Dynamic inclusion of ₹250 after user punch events are verified
+            }
+            document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
             document.getElementById('rider-jars').innerText = totalJars;
         }
 
