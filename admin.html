@@ -381,9 +381,11 @@
             if(!rosterStack) return;
             rosterStack.innerHTML = '';
 
-            const activeRidersInLogs = {};
+                        const activeRidersInLogs = {};
             currentAttendanceData.forEach(data => {
-                activeRidersInLogs[data.rider] = data;
+                // Naam ko lower case karke map mein save karo
+                const cleanName = (data.rider || "").toLowerCase().trim();
+                activeRidersInLogs[cleanName] = data;
             });
 
             // Is code ko line 389 se 392 ki jagah lagayein
@@ -392,9 +394,13 @@ const targetAgents = Object.keys(localRiderWallets).map(slug => ({
     slug: slug
 }));
 
-            targetAgents.forEach(agent => {
-                const logData = activeRidersInLogs[agent.name];
+                        targetAgents.forEach(agent => {
+                // Yahan agent name ko bhi lower case karke match karo
+                const agentNameLower = agent.name.toLowerCase().trim();
+                const logData = activeRidersInLogs[agentNameLower];
+                
                 const walletDoc = localRiderWallets[agent.slug] || {};
+                // ... baaki pura code same rahega
                 
                 let balanceAmount = walletDoc.walletBalance || 0;
                 if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
