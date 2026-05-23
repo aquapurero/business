@@ -49,8 +49,8 @@
         </div>
         <div class="flex items-center space-x-3">
             <div id="dutyStatusContainer">
-                <button onclick="window.triggerPunchIn()" id="punchBtn" class="bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-medium px-3.5 py-2 rounded-xl hover:bg-neutral-800 transition-all flex items-center space-x-1.5">
-                    <i class="fa-solid fa-right-to-bracket text-blue-400"></i>
+                <button onclick="window.triggerPunchIn()" id="punchBtn" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-xs text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-right-to-bracket"></i>
                     <span>Punch In</span>
                 </button>
             </div>
@@ -134,7 +134,7 @@
 
         const ordersRef = collection(db, "aquapure_orders");
         const COMM_RATE_PER_JAR = 3; 
-        let isPunchedInToday = false; // State holder to keep check on attendance base allowance
+        let isPunchedInToday = false; 
 
         function getTodayString() {
             const d = new Date();
@@ -153,9 +153,8 @@
             if(!docSnap.exists()) {
                 isPunchedInToday = false;
                 container.innerHTML = `
-                    <button onclick="window.triggerPunchIn()" class="bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-medium px-3.5 py-2 rounded-xl hover:bg-neutral-800 transition-all flex items-center space-x-1.5">
-                        <span class="h-1.5 w-1.5 rounded-full bg-neutral-600 mr-0.5"></span>
-                        <i class="fa-solid fa-right-to-bracket text-blue-400"></i>
+                    <button onclick="window.triggerPunchIn()" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-xs text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center space-x-1.5 animate-pulse">
+                        <i class="fa-solid fa-right-to-bracket"></i>
                         <span>Punch In</span>
                     </button>
                 `;
@@ -164,14 +163,13 @@
                 if (data.punchIn && !data.punchOut) {
                     isPunchedInToday = true;
                     container.innerHTML = `
-                        <button onclick="window.triggerPunchOut()" class="bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-semibold px-3.5 py-2 rounded-xl hover:bg-emerald-500/20 transition-all flex items-center space-x-1.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse mr-0.5"></span>
+                        <button onclick="window.triggerPunchOut()" class="bg-gradient-to-r from-rose-500 to-red-600 text-xs text-white font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-rose-500/20 transition-all flex items-center space-x-1.5">
                             <i class="fa-solid fa-right-from-bracket"></i>
                             <span>Punch Out</span>
                         </button>
                     `;
                 } else if(data.punchOut) {
-                    isPunchedInToday = true; // True even if finished shift for rendering the base metric accurately
+                    isPunchedInToday = true; 
                     container.innerHTML = `
                         <div class="bg-neutral-900/80 border border-neutral-800/60 text-[11px] text-neutral-500 font-medium px-3 py-1.5 rounded-xl cursor-not-allowed">
                             Shift Ended (${data.punchOut})
@@ -256,8 +254,10 @@
 
                 if(data.status === 'Pending') {
                     visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 z-10 relative"><i class="fa-solid fa-clock text-base"></i></div>`;
+                    
+                    // FIXED: Accept & Start Delivery invokes the automated structured WhatsApp API layer dynamically
                     pipelineActionBlock = `
-                        <button onclick="window.updateOrderStatusNode('${docId}', 'Out for Delivery')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
+                        <button onclick="window.handleStartDelivery('${docId}', '${data.customerName || 'Customer'}', '${data.mobileNumber || ''}', '${data.orderId || 'N/A'}', '${productVolume}')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-truck-fast text-cyan-400"></i>
                             <span>Accept & Start Delivery</span>
                         </button>
@@ -280,7 +280,6 @@
                     `;
                 }
 
-                // UPDATED UI: Estimated Earnings line completely stripped out
                 const itemTemplate = `
                     <div class="flex items-start space-x-4">
                         ${visualNodeIcon}
@@ -327,6 +326,33 @@
             updateMetricsUI(combinedEarningsCalculated, sumTotalJarsDelivered);
         });
 
+        // FIXED: Combined handler for changing DB node status and triggering beautifully formatted WhatsApp text
+        window.handleStartDelivery = async function(docId, customerName, customerMobile, orderId, quantity) {
+            try {
+                // 1. Update status in Firestore database
+                await updateDoc(doc(db, "aquapure_orders", docId), {
+                    status: 'Out for Delivery'
+                });
+
+                // 2. Dispatch structured automated text to WhatsApp engine node
+                if(customerMobile) {
+                    // Cleaning up number formats just in case
+                    let formattedPhone = customerMobile.replace(/\D/g, '');
+                    if(formattedPhone.length === 10) {
+                        formattedPhone = "91" + formattedPhone; 
+                    }
+
+                    const templateMessage = `💧 *AquaPure Delivery Update* 💧%0A%0AHello *${customerName}*, your water supply order *#${orderId}* is out for delivery!%0A%0A🚚 *Rider Name:* ${riderDisplayName}%0A📱 *Rider Mobile:* ${riderMobileId}%0A📦 *Quantity:* ${quantity} x 20L Jars%0A%0AOur rider is on the way and will reach your address shortly. Thank you for choosing AquaPure!`;
+                    
+                    const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${templateMessage}`;
+                    window.open(waUrl, '_blank');
+                }
+            } catch(err) {
+                console.error("Mutation and WhatsApp trigger failed:", err);
+                alert("Error updates allocation nodes.");
+            }
+        }
+
         window.updateOrderStatusNode = async function(docId, nextStatusState) {
             try {
                 const orderDocRef = doc(db, "aquapure_orders", docId);
@@ -354,11 +380,10 @@
             }
         };
 
-        // UPDATED METRICS UI: Updates the top bar panel to render base allowance dynamically
         function updateMetricsUI(earnings, totalJars) {
             let totalDisplayEarnings = earnings;
             if (isPunchedInToday) {
-                totalDisplayEarnings += 250; // Dynamic inclusion of ₹250 after user punch events are verified
+                totalDisplayEarnings += 250; 
             }
             document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
             document.getElementById('rider-jars').innerText = totalJars;
