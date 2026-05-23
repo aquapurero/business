@@ -42,6 +42,7 @@
 </head>
 <body class="min-h-screen custom-scrollbar">
 
+    <!-- NAVIGATION BAR -->
     <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-800 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-3">
             <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -49,7 +50,14 @@
             </div>
             <span class="text-xl font-semibold tracking-tight text-white">AquaPure <span class="text-xs font-medium uppercase tracking-widest text-neutral-400 ml-1">Admin</span></span>
         </div>
+        
         <div class="flex items-center space-x-4">
+            <!-- ADDED: CUSTOMER DATABASE PAGE ROUTER BLOCK -->
+            <a href="customerdb.html" class="flex items-center space-x-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 px-4 py-2 rounded-xl transition-all text-neutral-300 hover:text-white text-xs font-medium shadow-md shadow-black/40">
+                <i class="fa-solid fa-users text-cyan-400"></i>
+                <span>Customer DB</span>
+            </a>
+
             <div class="text-right hidden md:block">
                 <p class="text-sm font-medium text-white">Control Center</p>
                 <p class="text-xs text-neutral-400">Live Syncing Enabled</p>
@@ -305,13 +313,11 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
-        // FIXED DISPATCH SUBMISSION FOR RIDER APP SYNC
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
                 const selectedRiderValue = document.getElementById('riderSelect').value;
                 
-                // Extracting clean mobile number and rider name from string "9090580555 (Apu)"
                 let cleanRiderMobile = "";
                 let cleanRiderName = "";
                 
@@ -332,7 +338,6 @@
                     status: "Pending",
                     timestamp: serverTimestamp(),
                     
-                    // Added multi-layered routing keys so any type of staff page architecture fetches it successfully
                     rider: selectedRiderValue, 
                     riderMobile: cleanRiderMobile,
                     riderName: cleanRiderName,
