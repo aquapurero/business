@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure Terminal | Customer Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #000000;
+            color: #f5f5f7;
+        }
+        .apple-blur {
+            background: rgba(22, 22, 23, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Custom scrollbar for premium dark feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-900 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <i class="fa-solid fa-droplet text-white text-lg"></i>
+            </div>
+            <div>
+                <span class="text-lg font-semibold tracking-tight text-white block">AquaPure Live</span>
+                <span class="text-[10px] text-neutral-400 font-mono uppercase tracking-widest block">Customer Core Node</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-mono text-neutral-400 uppercase tracking-wider hidden sm:inline-block">Cloud Engine Connected</span>
+        </div>
+    </nav>
+
+    <!-- MAIN GRID CONTAINER -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- SIDEBAR: ADD CUSTOMER FORM -->
+        <div class="lg:col-span-1 space-y-4">
+            <div class="apple-blur rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center space-x-2.5 mb-6">
+                    <i class="fa-solid fa-user-plus text-blue-400 text-lg"></i>
+                    <h2 class="text-xl font-bold text-white tracking-tight">Naya Customer Add Karein</h2>
+                </div>
+                
+                <form id="customerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Customer Name</label>
+                        <input type="text" id="name" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm transition-all" placeholder="Rahul Kumar">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Phone Number</label>
+                        <input type="tel" id="phone" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-mono transition-all" placeholder="9876543210">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Complete Address</label>
+                        <textarea id="address" rows="3" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm transition-all resize-none" placeholder="Enter residential or business address..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Default Jar Price (INR)</label>
+                        <input type="number" id="price" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-mono transition-all" placeholder="20">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2 mt-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Save Customer Document</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- CONTENT PANEL: CUSTOMER DIRECTORY LOGS -->
+        <div class="lg:col-span-2 space-y-4">
+            
+            <!-- SEARCH AND COUNTER ACTIONS -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-1">
+                <div>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">Customer Database Matrix</h1>
+                    <p class="text-xs text-neutral-400 mt-0.5">Real-time repository for centralized client nodes</p>
+                </div>
+                
+                <!-- Search Interface Node -->
+                <div class="relative w-full sm:w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-neutral-500">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="searchBar" class="block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-xs transition-all" placeholder="Search by name, identifier or phone...">
+                </div>
+            </div>
+
+            <!-- STREAM TABLE WRAPPER -->
+            <div class="apple-blur rounded-2xl shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-neutral-900 text-left">
+                        <thead class="bg-neutral-950/40 text-[10px] font-mono font-bold tracking-widest text-neutral-400 uppercase border-b border-neutral-900">
+                            <tr>
+                                <th class="px-6 py-4">Client Node</th>
+                                <th class="px-6 py-4">Communication</th>
+                                <th class="px-6 py-4">Destination Target</th>
+                                <th class="px-6 py-4">Jar Price (₹)</th>
+                                <th class="px-6 py-4 text-center">Execution Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody" class="divide-y divide-neutral-900/60 text-sm">
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-neutral-500">
+                                    <i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-lg mb-2 block"></i>
+                                    Synchronizing live database records stream...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Firebase v12 Modules Layer Injection -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            query, 
+            orderBy, 
+            doc, 
+            updateDoc, 
+            deleteDoc, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        // Verified Firebase configuration parameters
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        };
+
+        // Initialization blocks
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const customerForm = document.getElementById('customerForm');
+        const tableBody = document.getElementById('customerTableBody');
+        const searchBar = document.getElementById('searchBar');
+
+        // 1. Storage Add Execution Sequence
+        customerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            const price = document.getElementById('price').value;
+
+            try {
+                await addDoc(collection(db, "customers"), {
+                    name: name,
+                    phone: phone,
+                    address: address,
+                    price: parseFloat(price),
+                    createdAt: serverTimestamp()
+                });
+                alert("Customer Data Successfully Save Ho Gaya!");
+                customerForm.reset();
+            } catch (error) {
+                console.error("Critical Cloud Registry Error:", error);
+                alert("Data save karne me dikkat aayi. Check console exceptions.");
+            }
+        });
+
+        // 2. Real-time Reactive Listener Engine (onSnapshot)
+        const q = query(collection(db, "customers"), orderBy("createdAt", "desc"));
+        
+        onSnapshot(q, (snapshot) => {
+            tableBody.innerHTML = "";
+            
+            if (snapshot.empty) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-neutral-500 font-medium">No customer entity found inside the current cloud network.</td></tr>`;
+                return;
+            }
+
+            snapshot.forEach((snapshotDoc) => {
+                const data = snapshotDoc.data();
+                const id = snapshotDoc.id;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-neutral-900/30 transition-all duration-150 customer-row";
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap font-semibold text-white name-field">${data.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-neutral-300 font-mono text-xs phone-field">${data.phone}</td>
+                    <td class="px-6 py-4 text-xs text-neutral-400 max-w-xs truncate">${data.address}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="number" value="${data.price}" id="price-${id}" class="w-20 bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-1.5 text-xs text-center font-mono text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-medium">
+                        <button data-id="${id}" class="update-btn bg-blue-500/10 hover:bg-blue-500 border border-blue-500/20 text-blue-400 hover:text-white px-3 py-1.5 rounded-xl transition-all duration-150 mr-2">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i>Update
+                        </button>
+                        <button data-id="${id}" class="delete-btn bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-400 hover:text-white px-3 py-1.5 rounded-xl transition-all duration-150">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Delete
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Modern safe event binding for module architecture
+            document.querySelectorAll('.update-btn').forEach(btn => {
+                btn.onclick = () => updatePrice(btn.getAttribute('data-id'));
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = () => deleteCustomer(btn.getAttribute('data-id'));
+            });
+        });
+
+        // 3. Document Mutations: Price Update Logic
+        async function updatePrice(id) {
+            const newPrice = document.getElementById(`price-${id}`).value;
+            const docRef = doc(db, "customers", id);
+            
+            try {
+                await updateDoc(docRef, {
+                    price: parseFloat(newPrice)
+                });
+                alert("Customer Price successfully update ho gaya!");
+            } catch (error) {
+                console.error("Mutation Sync Error:", error);
+                alert("Price update failure event log recorded.");
+            }
+        }
+
+        // 4. Document Mutations: Delete Customer Node
+        async function deleteCustomer(id) {
+            if(confirm("Confirm Destructive Action: Kya aap sach me is customer ko matrix se clear karna chahte hain?")) {
+                const docRef = doc(db, "customers", id);
+                try {
+                    await deleteDoc(docRef);
+                    alert("Customer safely purged from database.");
+                } catch (error) {
+                    console.error("Purge Error Exception:", error);
+                }
+            }
+        }
+
+        // 5. Dynamic Client-Side Searching Layer
+        searchBar.onkeyup = function() {
+            const input = searchBar.value.toLowerCase();
+            const rows = document.querySelectorAll('.customer-row');
+
+            rows.forEach(row => {
+                const nameText = row.querySelector('.name-field').textContent.toLowerCase();
+                const phoneText = row.querySelector('.phone-field').textContent.toLowerCase();
+                
+                if (nameText.includes(input) || phoneText.includes(input)) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        };
+    </script>
+</body>
+</html>
