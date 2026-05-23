@@ -65,12 +65,12 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div id="avatar-ring" class="h-14 w-14 rounded-full bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center text-cyan-400 text-lg font-bold shadow-inner relative">
-                        RS
+                        <span id="avatar-initials">RP</span>
                         <div id="avatar-dot" class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-neutral-600 border-2 border-neutral-950"></div>
                     </div>
                     <div>
-                        <h2 class="text-lg font-bold text-white tracking-tight">Rahul Sharma</h2>
-                        <p class="text-xs font-mono text-neutral-400">ID: #FF992</p>
+                        <h2 id="rider-name-display" class="text-lg font-bold text-white tracking-tight">Loading Name...</h2>
+                        <p id="rider-id-display" class="text-xs font-mono text-neutral-400">ID: #-----</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -179,40 +179,36 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // LocalStorage se login kiya hua naam uthao
-// LocalStorage se login kiya hua naam uthao
-const loggedInUser = localStorage.getItem('active_user') || "Guest";
+        // Configuration: LocalStorage se registered Mobile Number aur Exact Display Name fetch karein
+        const loggedInMobile = localStorage.getItem('active_user') || "";
+        const currentRider = localStorage.getItem('active_user_name') || "Rider Profile";
 
-// Strict Fallback: Agar login username me 'rahul' hai, toh direct database wala exact name load karein
-let currentRider = "Rahul Sharma"; 
+        // Security Guardrail Route Redirect
+        if (!loggedInMobile) {
+            window.location.href = 'index.html';
+        }
 
-if (loggedInUser !== "Guest" && !loggedInUser.toLowerCase().includes("rahul")) {
-    currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
+        const riderDocSlug = loggedInMobile; 
+        const RATE_PER_JAR = 30;
 
-const riderDocSlug = loggedInUser; 
-const RATE_PER_JAR = 30;
+        document.addEventListener('DOMContentLoaded', () => {
+            // UI par mobile number ke badle index page ka exact Display Name print karein
+            document.getElementById('rider-name-display').innerText = currentRider;
+            document.getElementById('rider-id-display').innerText = "ID: #" + loggedInMobile.substring(6);
+            
+            // Avatar profile picture logic render loop
+            const avatarData = localStorage.getItem('active_user_avatar');
+            const avatarRing = document.getElementById('avatar-ring');
+            const avatarDot = document.getElementById('avatar-dot');
+            
+            if (avatarData) {
+                avatarRing.innerHTML = `<img src="${avatarData}" class="h-full w-full rounded-full object-cover">`;
+                avatarRing.appendChild(avatarDot);
+            } else {
+                document.getElementById('avatar-initials').innerText = currentRider.substring(0, 2).toUpperCase();
+            }
+        });
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Naam update karo
-    document.querySelector('h2.text-lg').innerText = currentRider;
-    document.querySelector('p.text-xs.font-mono').innerText = "ID: #" + loggedInUser.substring(0, 5).toUpperCase();
-    
-    // Agar Avatar saved hai to wo dikhao
-    const avatarData = localStorage.getItem('active_user_avatar');
-    if (avatarData) {
-        const avatarRing = document.getElementById('avatar-ring');
-        avatarRing.innerHTML = `<img src="${avatarData}" class="h-full w-full rounded-full object-cover">`;
-    } else {
-        // Agar avatar nahi hai, to naam ka pehla letter dikhao
-        document.getElementById('avatar-ring').innerText = currentRider.charAt(0);
-    }
-});
-
-// Agar user login nahi hai, to wapas login page pe bhej do
-if (!localStorage.getItem('active_user')) {
-    window.location.href = 'index.html';
-}
         let unsubscribeTasks = null;
         let unsubscribeWallet = null;
 
@@ -232,8 +228,7 @@ if (!localStorage.getItem('active_user')) {
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Isse replace karein:
-const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
+        const attendanceDocId = `${getTodayString()}_${loggedInMobile}`;
         const attendanceRef = doc(db, "rider_attendance", attendanceDocId);
         const riderProfileRef = doc(db, "riders", riderDocSlug);
 
@@ -289,7 +284,8 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
             statusBadge.innerText = "Online";
             shiftTimeDisplay.innerText = `In: ${punchInTime}`;
 
-            avatarRing.className = "h-14 w-14 rounded-full bg-neutral-900 border-2 border-emerald-500 flex items-center justify-center text-cyan-400 text-lg font-bold shadow-inner relative pulse-border-active";
+            avatarRing.classList.add('border-emerald-500', 'pulse-border-active');
+            avatarRing.classList.remove('border-neutral-800');
             avatarDot.className = "absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-neutral-950";
         }
 
@@ -303,7 +299,8 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
             statusBadge.className = "text-[11px] font-bold text-neutral-400 tracking-wide bg-neutral-800/60 px-2.5 py-0.5 rounded-full border border-neutral-700/50";
             statusBadge.innerText = "Offline";
             
-            avatarRing.className = "h-14 w-14 rounded-full bg-neutral-900 border-2 border-neutral-800 flex items-center justify-center text-neutral-500 text-lg font-bold shadow-inner relative";
+            avatarRing.classList.remove('border-emerald-500', 'pulse-border-active');
+            avatarRing.classList.add('border-neutral-800');
             avatarDot.className = "absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-neutral-600 border-2 border-neutral-950";
 
             if (punchInTime && punchOutTime) {
@@ -320,6 +317,7 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
             try {
                 await setDoc(attendanceRef, {
                     rider: currentRider,
+                    mobile: loggedInMobile,
                     date: getTodayString(),
                     punchIn: timeString,
                     punchOut: null,
@@ -374,6 +372,7 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
         });
 
         function listenToLiveTasks() {
+            // Task allocation mapping targets the exact custom casing name
             const q = query(collection(db, "aquapure_orders"), where("rider", "==", currentRider));
             
             unsubscribeTasks = onSnapshot(q, (snapshot) => {
@@ -412,7 +411,7 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
                                     <i class="fa-solid fa-phone text-blue-400"></i>
                                     <span>Call</span>
                                 </a>
-                                <button onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(data.address)}', '_blank')" class="w-1/4 bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-xs py-3 rounded-xl flex items-center justify-center space-x-1 active:bg-neutral-800">
+                                <button onclick="window.open('http://maps.google.com/?q=${encodeURIComponent(data.address)}', '_blank')" class="w-1/4 bg-neutral-900 border border-neutral-800 text-neutral-300 font-medium text-xs py-3 rounded-xl flex items-center justify-center space-x-1 active:bg-neutral-800">
                                     <i class="fa-solid fa-location-arrow text-cyan-400"></i>
                                     <span>Route</span>
                                 </button>
@@ -480,12 +479,11 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
             });
         }
 
-                window.updateDeliveryStatus = async function(docId, buttonElement) {
+        window.updateDeliveryStatus = async function(docId, buttonElement) {
             buttonElement.disabled = true;
             buttonElement.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin text-xs"></i>`;
             
             try {
-                // 1. Order details fetch karein taaki WhatsApp pe bill bhejein
                 const orderRef = doc(db, "aquapure_orders", docId);
                 const orderSnap = await getDoc(orderRef);
                 const data = orderSnap.data();
@@ -493,15 +491,11 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
                 const jarQty = parseInt(data.quantity) || 0;
                 const totalAmount = jarQty * RATE_PER_JAR;
 
-                // 2. Database update karein
                 await updateDoc(orderRef, {
                     status: "progressing well"
                 });
 
-                // 3. WhatsApp Message generate karein
                 const msg = `✅ *AquaPure Order Delivered*\n\nHello ${data.customerName},\nYour order #${data.orderId || 'N/A'} has been delivered successfully.\n\n📦 *Quantity:* ${jarQty} Jars\n💰 *Total Amount:* ₹${totalAmount}\n\nThank you for choosing AquaPure!`;
-                
-                // 4. WhatsApp open karein
                 window.open(`https://wa.me/91${data.mobileNumber}?text=${encodeURIComponent(msg)}`, '_blank');
                 
             } catch (error) {
