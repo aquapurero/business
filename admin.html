@@ -42,7 +42,6 @@
 </head>
 <body class="min-h-screen custom-scrollbar">
 
-    <!-- NAVIGATION BAR -->
     <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-800 px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-3">
             <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -52,7 +51,6 @@
         </div>
         
         <div class="flex items-center space-x-4">
-            <!-- ADDED: CUSTOMER DATABASE PAGE ROUTER BLOCK -->
             <a href="customerdb.html" class="flex items-center space-x-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 px-4 py-2 rounded-xl transition-all text-neutral-300 hover:text-white text-xs font-medium shadow-md shadow-black/40">
                 <i class="fa-solid fa-users text-cyan-400"></i>
                 <span>Customer DB</span>
@@ -116,7 +114,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             <div class="lg:col-span-1 space-y-4">
                 <div class="apple-blur rounded-2xl p-5 space-y-4">
                     <div class="flex justify-between items-center pb-3 border-b border-neutral-800">
@@ -178,7 +175,7 @@
                 <div class="relative">
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Customer Name</label>
                     <div class="relative">
-                        <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Type or choose customer...">
+                        <input type="text" id="custName" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Type name to filter database...">
                         <div class="absolute right-4 top-3.5 text-neutral-500 pointer-events-none">
                             <i class="fa-solid fa-chevron-down text-xs"></i>
                         </div>
@@ -215,7 +212,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -232,9 +229,10 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
+        const customersRef = collection(db, "customers"); // Linked directly to customerdb.html
+        
         const RATE_PER_JAR = 30; 
-
-        let activeCustomerDirectory = [];
+        let globalCustomerDirectory = [];
 
         function getTodayString() {
             const d = new Date();
@@ -244,35 +242,30 @@
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
-        function extractUniqueCustomers(ordersSnapshot) {
-            const tempMap = new Map();
-            
-            ordersSnapshot.forEach((doc) => {
+        // REAL-TIME DROPDOWN FETCH FROM CUSTOMERS COLLECTION
+        onSnapshot(query(customersRef, orderBy("name", "asc")), (snapshot) => {
+            globalCustomerDirectory = [];
+            snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.customerName && data.customerName.trim().length > 0) {
-                    const cleanName = data.customerName.trim();
-                    tempMap.set(cleanName.toLowerCase(), {
-                        customerName: cleanName,
-                        mobileNumber: data.mobileNumber || '',
-                        address: data.address || ''
-                    });
-                }
+                globalCustomerDirectory.push({
+                    customerName: data.name || '',
+                    mobileNumber: data.phone || '',
+                    address: data.address || ''
+                });
             });
-
-            activeCustomerDirectory = Array.from(tempMap.values());
             renderDropdownItems(custNameInput.value);
-        }
+        });
 
         function renderDropdownItems(filterText = '') {
             dropdownPanel.innerHTML = '';
             const search = filterText.toLowerCase().trim();
             
-            const filtered = activeCustomerDirectory.filter(c => 
+            const filtered = globalCustomerDirectory.filter(c => 
                 c.customerName.toLowerCase().includes(search)
             );
 
             if (filtered.length === 0) {
-                dropdownPanel.innerHTML = `<div class="px-4 py-3 text-xs text-neutral-500">No matching saved customers found</div>`;
+                dropdownPanel.innerHTML = `<div class="px-4 py-3 text-xs text-neutral-500">No customer found. Click Customer DB to add.</div>`;
                 return;
             }
 
@@ -313,11 +306,11 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
+        // FORM SUBMISSION ENGINE
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
                 const selectedRiderValue = document.getElementById('riderSelect').value;
-                
                 let cleanRiderMobile = "";
                 let cleanRiderName = "";
                 
@@ -366,39 +359,32 @@
             if (newPassword && newPassword.trim().length > 0) {
                 try {
                     const profileRef = doc(db, "riders", riderSlug);
-                    await updateDoc(profileRef, {
-                        password: newPassword.trim()
-                    });
+                    await updateDoc(profileRef, { password: newPassword.trim() });
                     alert("Rider authentication credential synchronized successfully.");
                 } catch (err) {
                     console.error("Security write blocked:", err);
-                    alert("Failed to write password.");
                 }
             }
         };
 
         window.deleteRiderRecord = async function(riderSlug, riderName) {
-            if (confirm(`Warning: Are you sure you want to completely remove ${riderName} (${riderSlug}) from the database? This cannot be undone.`)) {
+            if (confirm(`Warning: Are you sure you want to completely remove ${riderName}?`)) {
                 try {
                     await deleteDoc(doc(db, "riders", riderSlug));
-                    alert(`Rider profile ${riderSlug} successfully deleted.`);
+                    alert(`Rider profile deleted.`);
                 } catch (error) {
                     console.error("Error removing rider document:", error);
-                    alert("Failed to delete rider profile.");
                 }
             }
         };
 
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
-
         let localRiderWallets = {};
 
         onSnapshot(ridersRef, (walletSnapshot) => {
             localRiderWallets = {}; 
-            walletSnapshot.forEach((wDoc) => {
-                localRiderWallets[wDoc.id] = wDoc.data();
-            });
+            walletSnapshot.forEach((wDoc) => { localRiderWallets[wDoc.id] = wDoc.data(); });
             refreshRiderRosterLayout();
             loadRiderDropdown(); 
         });
@@ -406,9 +392,7 @@
         let currentAttendanceData = [];
         onSnapshot(attendanceQuery, (snapshot) => {
             currentAttendanceData = [];
-            snapshot.forEach(docSnap => {
-                currentAttendanceData.push(docSnap.data());
-            });
+            snapshot.forEach(docSnap => { currentAttendanceData.push(docSnap.data()); });
             refreshRiderRosterLayout();
         });
 
@@ -425,16 +409,11 @@
 
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
-                
                 let displayName = walletDoc.name || walletDoc.displayName || "";
                 displayName = displayName.trim();
-                
-                if (!displayName || displayName === slug) {
-                    displayName = "Rider";
-                }
+                if (!displayName || displayName === slug) displayName = "Rider";
                 
                 const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(displayName).toLowerCase().trim());
-                
                 let balanceAmount = walletDoc.walletBalance || 0;
                 if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
 
@@ -474,9 +453,7 @@
                             </div>
                             ${statusBadge}
                         </div>
-                        
                         ${dutyTimingText}
-
                         <div class="pt-2 border-t border-neutral-800/60 flex items-center justify-between">
                             <div class="flex items-center space-x-1.5">
                                 <i class="fa-solid fa-wallet text-neutral-500 text-xs"></i>
@@ -484,11 +461,10 @@
                                 <span class="text-xs font-bold text-white font-mono">₹${Number(balanceAmount).toFixed(2)}</span>
                             </div>
                             <div class="flex items-center space-x-3">
-                                <button onclick="window.triggerPasswordUpdate('${slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors" title="Change Rider Password">
-                                    <i class="fa-solid fa-key text-[10px]"></i>
-                                    <span>Pass</span>
+                                <button onclick="window.triggerPasswordUpdate('${slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors">
+                                    <i class="fa-solid fa-key text-[10px]"></i><span>Pass</span>
                                 </button>
-                                <button onclick="window.deleteRiderRecord('${slug}', '${displayName}')" class="text-neutral-500 hover:text-rose-400 transition-colors p-1" title="Delete Rider Profile">
+                                <button onclick="window.deleteRiderRecord('${slug}', '${displayName}')" class="text-neutral-500 hover:text-rose-400 transition-colors p-1">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
@@ -506,16 +482,11 @@
             
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
-                
                 let displayName = walletDoc.name || walletDoc.displayName || "";
                 displayName = displayName.trim();
-                
-                if (!displayName || displayName === slug) {
-                    displayName = "Rider";
-                }
+                if (!displayName || displayName === slug) displayName = "Rider";
                 
                 const selectValueAndLabel = `${slug} (${displayName})`;
-                
                 const option = document.createElement('option');
                 option.value = selectValueAndLabel;
                 option.textContent = selectValueAndLabel;
@@ -524,14 +495,11 @@
         }
 
         onSnapshot(ordersRef, (snapshot) => {
-            extractUniqueCustomers(snapshot);
-
             const tbody = document.getElementById('order-table-body');
             if(!tbody) return;
             tbody.innerHTML = '';
             
             let total = 0, active = 0, completed = 0, pending = 0;
-
             if(snapshot.empty) {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-neutral-500">No active dispatches found.</td></tr>`;
             }
