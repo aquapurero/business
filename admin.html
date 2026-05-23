@@ -356,34 +356,16 @@
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
-                let localRiderWallets = {};
-        
-        onSnapshot(ridersRef, (walletSnapshot) => {
-            localRiderWallets = {}; // Reset
-            walletSnapshot.forEach((wDoc) => {
-                localRiderWallets[wDoc.id] = wDoc.data();
-            });
-            refreshRiderRosterLayout();
-            loadRiderDropdown(); // <--- Ye line already added hai aapke code mein
-        });
-
-        let currentAttendanceData = [];
-        onSnapshot(attendanceQuery, (snapshot) => {
-            currentAttendanceData = [];
-            snapshot.forEach(docSnap => {
-                currentAttendanceData.push(docSnap.data());
-            });
-            refreshRiderRosterLayout();
-        });
-
-        function refreshRiderRosterLayout() {
-            const rosterStack = document.getElementById('attendance-roster-stack');
-            if(!rosterStack) return;
-            rosterStack.innerHTML = '';
-            
-            // ... (baki ka bada layout code yahan chalega) ...
-            
-        } // <--- Is bracket ke thik niche Step 1 wala code paste karna hai.
+        let localRiderWallets = {};
+        // Is block ko aise update karein:
+onSnapshot(ridersRef, (walletSnapshot) => {
+    localRiderWallets = {}; // Reset
+    walletSnapshot.forEach((wDoc) => {
+        localRiderWallets[wDoc.id] = wDoc.data();
+    });
+    refreshRiderRosterLayout();
+    loadRiderDropdown(); // <--- Ye nayi line yahan add karein
+});
 
         let currentAttendanceData = [];
         onSnapshot(attendanceQuery, (snapshot) => {
@@ -405,22 +387,6 @@
                 const cleanName = (data.rider || "").toLowerCase().trim();
                 activeRidersInLogs[cleanName] = data;
             });
-            
-            
-            // Is function ko refreshRiderRosterLayout ke closing bracket ke niche paste karein
-async function loadRiderDropdown() {
-    const riderSelect = document.getElementById('riderSelect');
-    if (!riderSelect) return; // Dropdown safety check
-    riderSelect.innerHTML = '<option value="">Select a Rider</option>';
-    
-    Object.keys(localRiderWallets).forEach(slug => {
-        const displayName = slug.replace(/_/g, ' ');
-        const option = document.createElement('option');
-        option.value = displayName;
-        option.textContent = displayName;
-        riderSelect.appendChild(option);
-    });
-}
 
             // Is code ko line 389 se 392 ki jagah lagayein
 const targetAgents = Object.keys(localRiderWallets).map(slug => ({
