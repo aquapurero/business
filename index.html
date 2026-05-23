@@ -62,11 +62,19 @@
                 <p id="compress-status" class="text-[11px] text-emerald-400 hidden"><i class="fa-solid fa-circle-check"></i> Image Compressed Successfully</p>
             </div>
 
-            <div>
-                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Username / Mobile Number</label>
+            <div id="fullname-container" class="hidden">
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Display Name (Rider App Name)</label>
                 <div class="relative">
-                    <i class="fa-solid fa-user absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
-                    <input type="text" id="username" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Enter username or 10-digit mobile">
+                    <i class="fa-solid fa-id-card absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
+                    <input type="text" id="fullname" class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g., Abinash Kumar">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number (Login ID)</label>
+                <div class="relative">
+                    <i class="fa-solid fa-phone absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
+                    <input type="tel" id="mobileNumber" pattern="[0-9]{10}" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="10-digit mobile number">
                 </div>
             </div>
 
@@ -116,25 +124,34 @@
             const btnSignup = document.getElementById('tab-signup');
             const roleContainer = document.getElementById('role-container');
             const avatarContainer = document.getElementById('avatar-container');
+            const fullnameContainer = document.getElementById('fullname-container');
             const submitBtn = document.getElementById('submit-btn');
+            const fullnameInput = document.getElementById('fullname');
+            const mobileInput = document.getElementById('mobileNumber');
 
             compressedAvatarBase64 = "";
             document.getElementById('avatar-preview').classList.add('hidden');
             document.getElementById('avatar-placeholder').classList.remove('hidden');
             document.getElementById('compress-status').classList.add('hidden');
             document.getElementById('avatar-input').value = "";
+            fullnameInput.value = "";
+            mobileInput.value = "";
 
             if (mode === 'signup') {
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.remove('hidden');
                 avatarContainer.classList.remove('hidden');
+                fullnameContainer.classList.remove('hidden');
+                fullnameInput.required = true;
                 submitBtn.innerText = "Register System Account";
             } else {
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.add('hidden');
                 avatarContainer.classList.add('hidden');
+                fullnameContainer.classList.add('hidden');
+                fullnameInput.required = false;
                 submitBtn.innerText = "Authenticate Session";
             }
         }
@@ -170,7 +187,7 @@
 
                     canvas.width = width;
                     canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width; height);
+                    ctx.drawImage(img, 0, 0, width, height);
 
                     compressedAvatarBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
@@ -188,53 +205,60 @@
 
         window.handleAuth = async function(e) {
             e.preventDefault();
-            const usernameInput = document.getElementById('username').value.trim().toLowerCase();
+            const mobileInput = document.getElementById('mobileNumber').value.trim();
             const passwordInput = document.getElementById('password').value;
             const roleInput = document.getElementById('role').value;
+            const rawFullName = document.getElementById('fullname').value.trim();
 
-            if (!usernameInput || !passwordInput) return;
+            if (!mobileInput || !passwordInput) return;
 
-            const userDocRef = doc(db, "aquapure_users", usernameInput);
+            // Database reference is now configured using Mobile Number as the Document ID key
+            const userDocRef = doc(db, "aquapure_users", mobileInput);
 
             if (mode === 'signup') {
                 const snap = await getDoc(userDocRef);
                 if(snap.exists()){
-                    alert("This username/mobile is already registered!");
+                    alert("This mobile number is already registered!");
                     return;
                 }
                 
+                // Saving registration details
                 await setDoc(userDocRef, {
-                    username: usernameInput,
-                    mobileNumber: usernameInput, // Saved explicitly for rider operations mapping
+                    mobile: mobileInput,
+                    displayName: rawFullName || ("User_" + mobileInput.substring(6)),
                     password: passwordInput, 
                     role: roleInput,
-                    name: usernameInput.toUpperCase(),
                     avatar: compressedAvatarBase64 || null
                 });
+
+                if (roleInput === 'Staff') {
+                    const riderDocRef = doc(db, "riders", mobileInput);
+                    await setDoc(riderDocRef, {
+                        displayName: rawFullName,
+                        password: passwordInput,
+                        walletBalance: 0
+                    });
+                }
+
                 alert("Account successfully provisioned! Please sign in.");
                 switchAuthMode('signin');
             } else {
-                // Sign In Process
+                // Sign In Process using Mobile Number
                 const snap = await getDoc(userDocRef);
                 if(!snap.exists()) {
-                    alert("User account terminal profile not found.");
+                    alert("User terminal profile with this mobile number not found.");
                     return;
                 }
                 const userData = snap.data();
                 if(userData.password === passwordInput) {
+                    localStorage.setItem('active_user', userData.mobile);
                     
-                    // FIXED SESSION DATA LAYER SYNCHRONIZATION
-                    // Setting multiple fallback session tags to ensure staff.html opens seamlessly
-                    const sessionPayload = {
-                        username: userData.username,
-                        mobileNumber: userData.mobileNumber || userData.username,
-                        name: userData.name || userData.username,
-                        role: userData.role
-                    };
-
-                    localStorage.setItem('active_user', userData.username);
-                    localStorage.setItem('currentRider', JSON.stringify(sessionPayload));
-                    localStorage.setItem('currentUser', JSON.stringify(sessionPayload));
+                    // Storing the exact Display Name typed by the user to use in staff.html
+                    if (userData.displayName) {
+                        localStorage.setItem('active_user_name', userData.displayName);
+                    } else {
+                        localStorage.setItem('active_user_name', userData.mobile);
+                    }
 
                     if (userData.avatar) {
                         localStorage.setItem('active_user_avatar', userData.avatar);
@@ -242,7 +266,6 @@
                         localStorage.removeItem('active_user_avatar');
                     }
 
-                    // Redirection Logic
                     if(userData.role === 'Admin') {
                         window.location.href = 'admin.html';
                     } else {
