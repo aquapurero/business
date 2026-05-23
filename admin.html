@@ -233,12 +233,6 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Dropdown me plain value dikhane ke liye changes
-        function formatToTitleCase(str) {
-            if (!str) return '';
-            return str.replace(/_/g, ' ');
-        }
-
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
@@ -395,7 +389,6 @@
                 const walletDoc = localRiderWallets[slug] || {};
                 const riderName = walletDoc.name || slug;
                 
-                // Flexible matching logic for Saira / 8984225322
                 const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(riderName).toLowerCase().trim());
                 
                 let balanceAmount = walletDoc.walletBalance || 0;
@@ -427,7 +420,7 @@
 
                 const agentInitial = String(riderName).substring(0, 2).toUpperCase();
                 
-                // Format: Number (Name) ya Name (Slug) agar numeric text nahi hai to
+                // FIXED FORMAT FOR ROSTER CARDS: Number (Display Name)
                 const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${riderName})</span>`;
 
                 const itemHtml = `
@@ -467,11 +460,13 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 const riderName = walletDoc.name || slug;
-                const selectLabel = `${slug} (${riderName})`;
+                
+                // FIXED FORMAT FOR DROPDOWN OPTIONS: Number (Display Name)
+                const selectValueAndLabel = `${slug} (${riderName})`;
                 
                 const option = document.createElement('option');
-                option.value = selectLabel;
-                option.textContent = selectLabel;
+                option.value = selectValueAndLabel;
+                option.textContent = selectValueAndLabel;
                 riderSelect.appendChild(option);
             });
         }
