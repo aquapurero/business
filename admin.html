@@ -194,10 +194,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                        <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-                            <option value="Rahul Sharma">Rahul Sharma</option>
-                            <option value="Deepak Mohanty">Deepak Mohanty</option>
-                        </select>
+                      <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+    </select>
                     </div>
                 </div>
                 <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
@@ -520,6 +518,20 @@
         window.toggleOrderModal = function() {
             document.getElementById('orderModal').classList.toggle('hidden');
         };
+        
+        // Rider list ko automatic sync karne ka code
+onSnapshot(ridersRef, (snapshot) => {
+    const riderSelect = document.getElementById('riderSelect');
+    riderSelect.innerHTML = ''; // Purane options saaf karo
+    
+    snapshot.forEach((doc) => {
+        const riderName = doc.id.replace('_', ' '); // Slug se naam wapas banao
+        const option = document.createElement('option');
+        option.value = riderName;
+        option.textContent = riderName;
+        riderSelect.appendChild(option);
+    });
+});
     </script>
 </body>
 </html>
