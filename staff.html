@@ -179,9 +179,32 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        const currentRider = "Rahul Sharma"; 
-        const riderDocSlug = "Rahul_Sharma"; 
-        const RATE_PER_JAR = 30; // Global pricing rate parameter
+        // LocalStorage se login kiya hua naam uthao
+const loggedInUser = localStorage.getItem('active_user') || "Guest";
+const currentRider = loggedInUser.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '); 
+const riderDocSlug = loggedInUser; 
+const RATE_PER_JAR = 30;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Naam update karo
+    document.querySelector('h2.text-lg').innerText = currentRider;
+    document.querySelector('p.text-xs.font-mono').innerText = "ID: #" + loggedInUser.substring(0, 5).toUpperCase();
+    
+    // Agar Avatar saved hai to wo dikhao
+    const avatarData = localStorage.getItem('active_user_avatar');
+    if (avatarData) {
+        const avatarRing = document.getElementById('avatar-ring');
+        avatarRing.innerHTML = `<img src="${avatarData}" class="h-full w-full rounded-full object-cover">`;
+    } else {
+        // Agar avatar nahi hai, to naam ka pehla letter dikhao
+        document.getElementById('avatar-ring').innerText = currentRider.charAt(0);
+    }
+});
+
+// Agar user login nahi hai, to wapas login page pe bhej do
+if (!localStorage.getItem('active_user')) {
+    window.location.href = 'index.html';
+}
         let unsubscribeTasks = null;
         let unsubscribeWallet = null;
 
@@ -201,7 +224,8 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        const attendanceDocId = `${getTodayString()}_${currentRider.replace(/\s+/g, '_')}`;
+        // Isse replace karein:
+const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
         const attendanceRef = doc(db, "rider_attendance", attendanceDocId);
         const riderProfileRef = doc(db, "riders", riderDocSlug);
 
