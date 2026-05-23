@@ -13,12 +13,24 @@
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #000000;
             color: #f5f5f7;
+            -webkit-tap-highlight-color: transparent;
         }
         .apple-blur {
             background: rgba(22, 22, 23, 0.8);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gradient-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .gradient-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        .gradient-btn:active {
+            transform: translateY(1px);
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -36,78 +48,68 @@
         }
     </style>
 </head>
-<body class="min-h-screen pb-12">
+<body class="min-h-screen pb-24 md:pb-12 custom-scrollbar">
 
-    <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-900 px-6 py-4 flex justify-between items-center">
+    <nav class="sticky top-0 z-50 apple-blur border-b border-neutral-900 px-4 md:px-6 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-3">
             <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <i class="fa-solid fa-droplet text-white text-lg"></i>
             </div>
             <div>
-                <span class="text-lg font-semibold tracking-tight text-white block">AquaPure Live</span>
-                <span class="text-[10px] text-neutral-400 font-mono uppercase tracking-widest block">Customer Core Node</span>
+                <span class="text-base font-semibold tracking-tight text-white block leading-tight">AquaPure Live</span>
+                <span class="text-[9px] text-neutral-400 font-mono uppercase tracking-widest block">Customer Core Node</span>
             </div>
         </div>
         <div class="flex items-center space-x-4">
-            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-xs font-mono text-neutral-400 uppercase tracking-wider hidden sm:inline-block">Cloud Engine Connected</span>
+            <a href="index.html" class="flex items-center space-x-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 px-3 py-2 rounded-xl transition-all text-neutral-300 hover:text-white text-xs font-medium">
+                <i class="fa-solid fa-chart-line text-blue-400"></i>
+                <span class="hidden sm:inline">Dashboard</span>
+            </a>
+            <div class="flex items-center space-x-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-wider hidden md:inline-block">Live</span>
+            </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div class="lg:col-span-1 space-y-4">
-            <div class="apple-blur rounded-2xl p-6 shadow-xl">
-                <div class="flex items-center space-x-2.5 mb-6">
+        <div class="lg:col-span-1">
+            <div class="apple-blur rounded-2xl p-5 md:p-6 shadow-xl sticky top-24">
+                <div class="flex items-center space-x-2.5 mb-5">
                     <i class="fa-solid fa-user-plus text-blue-400 text-lg"></i>
-                    <h2 class="text-xl font-bold text-white tracking-tight">Add New Customer</h2>
+                    <h2 class="text-lg font-bold text-white tracking-tight">Add New Customer</h2>
                 </div>
                 
-                <form id="customerForm" class="space-y-4">
+                <form id="customerForm" class="space-y-4" autocomplete="off">
                     <div>
-                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Customer Name</label>
-                        <input type="text" id="name" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm transition-all" placeholder="Rahul Kumar">
+                        <label class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Customer Name</label>
+                        <input type="text" id="name" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/80 text-sm transition-all placeholder:text-neutral-600" placeholder="Rahul Kumar">
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Phone Number</label>
-                        <input type="tel" id="phone" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-mono transition-all" placeholder="9876543210">
+                        <label class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Phone Number</label>
+                        <input type="tel" id="phone" required pattern="[0-9]{10}" class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/80 text-sm font-mono transition-all placeholder:text-neutral-600" placeholder="9876543210">
                     </div>
                     
                     <div>
-                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Complete Address</label>
-                        <textarea id="address" rows="3" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm transition-all resize-none" placeholder="Enter residential or business address..."></textarea>
+                        <label class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Complete Address</label>
+                        <textarea id="address" rows="2" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/80 text-sm transition-all resize-none placeholder:text-neutral-600" placeholder="Enter residential or business address..."></textarea>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Default Qty</label>
-                            <input type="number" id="defaultQty" value="1" min="1" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-mono transition-all">
+                            <label class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Default Qty</label>
+                            <input type="number" id="defaultQty" value="1" min="1" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/80 text-sm font-mono transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider">Jar Price (INR)</label>
-                            <input type="number" id="price" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-mono transition-all" placeholder="30">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Delivery Frequency Profile</label>
-                        <div class="grid grid-cols-2 gap-2 bg-neutral-950 p-1.5 border border-neutral-800 rounded-xl">
-                            <label class="flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all has-[:checked]:bg-blue-600 has-[:checked]:text-white text-neutral-400">
-                                <input type="radio" name="deliveryType" value="Regular" checked class="hidden">
-                                <i class="fa-solid fa-calendar-check text-[10px]"></i>
-                                <span>Regular</span>
-                            </label>
-                            <label class="flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg text-xs font-semibold uppercase tracking-wider cursor-pointer transition-all has-[:checked]:bg-amber-600 has-[:checked]:text-white text-neutral-400">
-                                <input type="radio" name="deliveryType" value="Inregular" class="hidden">
-                                <i class="fa-solid fa-calendar-minus text-[10px]"></i>
-                                <span>Inregular</span>
-                            </label>
+                            <label class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Jar Price (INR)</label>
+                            <input type="number" id="price" required class="mt-1.5 block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/80 text-sm font-mono transition-all placeholder:text-neutral-600" placeholder="30">
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2 mt-4">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <button type="submit" class="w-full gradient-btn text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/10 transition-all text-sm flex items-center justify-center space-x-2 mt-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
                         <span>Save Customer Document</span>
                     </button>
                 </form>
@@ -116,9 +118,9 @@
 
         <div class="lg:col-span-2 space-y-4">
             
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-1">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-1">
                 <div>
-                    <h1 class="text-2xl font-bold text-white tracking-tight">Customer Database Matrix</h1>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Customer Database Matrix</h1>
                     <p class="text-xs text-neutral-400 mt-0.5">Real-time repository for centralized client nodes</p>
                 </div>
                 
@@ -126,33 +128,17 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-neutral-500">
                         <i class="fa-solid fa-magnifying-glass text-xs"></i>
                     </span>
-                    <input type="text" id="searchBar" class="block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-xs transition-all" placeholder="Search by name, frequency or phone...">
+                    <input type="text" id="searchBar" class="block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500/80 text-xs transition-all placeholder:text-neutral-500" placeholder="Search by name, frequency or mobile...">
                 </div>
             </div>
 
-            <div class="apple-blur rounded-2xl shadow-xl overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-neutral-900 text-left">
-                        <thead class="bg-neutral-950/40 text-[10px] font-mono font-bold tracking-widest text-neutral-400 uppercase border-b border-neutral-900">
-                            <tr>
-                                <th class="px-6 py-4">Client Node</th>
-                                <th class="px-6 py-4">Profile Engine</th>
-                                <th class="px-6 py-4">Destination / Route</th>
-                                <th class="px-6 py-4 text-center">Jar Parameters</th>
-                                <th class="px-6 py-4 text-center">Execution Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="customerTableBody" class="divide-y divide-none check-rows text-sm">
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-neutral-500">
-                                    <i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-lg mb-2 block"></i>
-                                    Synchronizing live database records stream...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div id="matrixContainer" class="space-y-3.5">
+                <div class="apple-blur rounded-2xl p-8 text-center text-neutral-500 flex flex-col items-center justify-center space-y-3">
+                    <i class="fa-solid fa-circle-notch animate-spin text-blue-500 text-xl"></i>
+                    <p class="text-sm font-medium tracking-wide">Synchronizing live database records stream...</p>
                 </div>
             </div>
+            
         </div>
 
     </main>
@@ -185,19 +171,18 @@
         const db = getFirestore(app);
 
         const customerForm = document.getElementById('customerForm');
-        const tableBody = document.getElementById('customerTableBody');
+        const matrixContainer = document.getElementById('matrixContainer');
         const searchBar = document.getElementById('searchBar');
 
-        // Form Submit Handler
+        // Form Submit Handler (Saves default 'Regular' deliveryType)
         customerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const address = document.getElementById('address').value;
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
             const price = document.getElementById('price').value;
             const defaultQty = document.getElementById('defaultQty').value;
-            const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
 
             try {
                 await addDoc(collection(db, "customers"), {
@@ -206,7 +191,7 @@
                     address: address,
                     price: parseFloat(price),
                     defaultQty: parseInt(defaultQty) || 1,
-                    deliveryType: deliveryType,
+                    deliveryType: "Regular", // Form data default assignment 
                     createdAt: serverTimestamp()
                 });
                 alert("Customer Profile safely archived inside cloud mesh!");
@@ -218,14 +203,18 @@
             }
         });
 
-        // Live Cloud Data Feed Syncer
+        // Live Cloud Data Feed Syncer mapped into Matrix Cards
         const q = query(collection(db, "customers"), orderBy("createdAt", "desc"));
         
         onSnapshot(q, (snapshot) => {
-            tableBody.innerHTML = "";
+            matrixContainer.innerHTML = "";
             
             if (snapshot.empty) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-neutral-500 font-medium">No customer entities synced inside the node stream.</td></tr>`;
+                matrixContainer.innerHTML = `
+                    <div class="apple-blur rounded-2xl p-10 text-center text-neutral-500 font-medium text-sm">
+                        <i class="fa-solid fa-folder-open text-xl text-neutral-600 block mb-2"></i>
+                        No customer entities synced inside the node stream.
+                    </div>`;
                 return;
             }
 
@@ -237,46 +226,56 @@
                 const dType = data.deliveryType || "Regular";
 
                 const typeBadge = dType === "Regular" 
-                    ? `<span class="inline-flex items-center space-x-1 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 type-field">Regular</span>`
-                    : `<span class="inline-flex items-center space-x-1 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 type-field">Inregular</span>`;
+                    ? `<span class="inline-flex items-center text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 type-field">Regular</span>`
+                    : `<span class="inline-flex items-center text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 type-field">Inregular</span>`;
 
-                const row = document.createElement('tr');
-                row.className = "hover:bg-neutral-900/30 border-b border-neutral-900/60 transition-all duration-150 customer-row";
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="font-semibold text-white name-field">${data.name}</div>
-                        <div class="text-[11px] font-mono text-neutral-500 phone-field mt-0.5">${data.phone}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">${typeBadge}</td>
-                    <td class="px-6 py-4 text-xs text-neutral-400 max-w-xs truncate">${data.address}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center justify-center space-x-2">
+                const nodeCard = document.createElement('div');
+                nodeCard.className = "apple-blur rounded-2xl p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-neutral-700/60 transition-all duration-200 customer-row";
+                
+                nodeCard.innerHTML = `
+                    <div class="space-y-1 w-full sm:w-auto">
+                        <div class="flex items-center justify-between sm:justify-start gap-2.5">
+                            <span class="font-bold text-white text-base tracking-tight name-field">${data.name}</span>
+                            ${typeBadge}
+                        </div>
+                        <div class="text-xs font-mono text-neutral-400 flex items-center gap-1.5 phone-field">
+                            <i class="fa-solid fa-phone text-[10px] text-neutral-500"></i>${data.phone}
+                        </div>
+                        <div class="text-xs text-neutral-400 flex items-start gap-1.5 pt-0.5 max-w-sm">
+                            <i class="fa-solid fa-location-dot text-[11px] text-neutral-500 mt-0.5 shrink-0"></i>
+                            <span class="line-clamp-2">${data.address}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 border-neutral-900 pt-3 sm:pt-0">
+                        <div class="flex items-center space-x-2.5">
                             <div class="flex flex-col items-center">
                                 <span class="text-[9px] font-mono uppercase tracking-widest text-neutral-500 block mb-1">Qty</span>
-                                <input type="number" value="${dQty}" id="qty-${id}" class="w-14 bg-neutral-950 border border-neutral-900 rounded-lg px-1 py-1 text-xs text-center font-mono text-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-700">
+                                <input type="number" value="${dQty}" id="qty-${id}" class="w-12 bg-neutral-950 border border-neutral-800 rounded-lg py-1 text-xs text-center font-mono text-neutral-200 focus:outline-none focus:border-neutral-700">
                             </div>
                             <div class="flex flex-col items-center">
                                 <span class="text-[9px] font-mono uppercase tracking-widest text-neutral-500 block mb-1">Rate (₹)</span>
-                                <input type="number" value="${data.price}" id="price-${id}" class="w-16 bg-neutral-950 border border-neutral-900 rounded-lg px-1 py-1 text-xs text-center font-mono text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <input type="number" value="${data.price}" id="price-${id}" class="w-16 bg-neutral-950 border border-neutral-800 rounded-lg py-1 text-xs text-center font-mono text-emerald-400 font-bold focus:outline-none focus:border-blue-500">
                             </div>
                         </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-xs font-medium">
-                        <button data-id="${id}" class="update-btn bg-blue-500/10 hover:bg-blue-500 border border-blue-500/20 text-blue-400 hover:text-white px-3 py-1.5 rounded-xl transition-all duration-150 mr-1.5">
-                            <i class="fa-solid fa-rotate mr-1"></i>Sync
-                        </button>
-                        <button data-id="${id}" class="toggle-type-btn bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 px-2.5 py-1.5 rounded-xl transition-all duration-150 mr-1.5" title="Toggle Frequency Mode">
-                            <i class="fa-solid fa-arrows-left-right"></i>
-                        </button>
-                        <button data-id="${id}" class="delete-btn bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-400 hover:text-white px-2.5 py-1.5 rounded-xl transition-all duration-150">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
+
+                        <div class="flex items-center space-x-2 self-end sm:self-center">
+                            <button data-id="${id}" class="update-btn h-9 w-9 bg-blue-500/10 hover:bg-blue-600 border border-blue-500/20 text-blue-400 hover:text-white rounded-xl flex items-center justify-center transition-all" title="Sync Parameters">
+                                <i class="fa-solid fa-rotate text-xs"></i>
+                            </button>
+                            <button data-id="${id}" class="toggle-type-btn h-9 w-9 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 rounded-xl flex items-center justify-center transition-all" title="Toggle Frequency Mode (Regular / Inregular)">
+                                <i class="fa-solid fa-arrows-left-right text-xs"></i>
+                            </button>
+                            <button data-id="${id}" class="delete-btn h-9 w-9 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-400 hover:text-white rounded-xl flex items-center justify-center transition-all" title="Delete Customer Profile">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
                 `;
-                tableBody.appendChild(row);
+                matrixContainer.appendChild(nodeCard);
             });
 
-            // Injection handlers directly linked using loop assignments
+            // Action Handlers
             document.querySelectorAll('.update-btn').forEach(btn => {
                 btn.onclick = () => saveInlineEdits(btn.getAttribute('data-id'));
             });
@@ -299,29 +298,29 @@
                     price: parseFloat(updatedPrice),
                     defaultQty: parseInt(updatedQty) || 1
                 });
-                alert("Customer structural fields synced successfully!");
+                alert("Customer parameters updated successfully!");
             } catch (error) {
                 console.error("Mutation Failure:", error);
             }
         }
 
-        // Quick Toggle Engine between Regular / Inregular frequency
+        // Quick Toggle Engine between Regular / Inregular frequency inside database grid
         async function switchTypeProfile(id) {
             const docRef = doc(db, "customers", id);
-            const targetRow = document.querySelector(`[data-id="${id}"]`).closest('tr');
-            const currentBadgeText = targetRow.querySelector('.type-field').textContent.trim();
+            const targetCard = document.querySelector(`[data-id="${id}"]`).closest('.customer-row');
+            const currentBadgeText = targetCard.querySelector('.type-field').textContent.trim();
             const alternateFrequency = currentBadgeText === "Regular" ? "Inregular" : "Regular";
             
             try {
                 await updateDoc(docRef, { deliveryType: alternateFrequency });
             } catch (error) {
-                console.error("Frequency state tracking modification error:", error);
+                console.error("Frequency state modification error:", error);
             }
         }
 
         // Destructive Document Eraser Engine
         async function purgeDocumentNode(id) {
-            if(confirm("Confirm Destructive Action: Pure history clear karein sequence database node se?")) {
+            if(confirm("Confirm Destructive Action: Delete this profile permanently from database?")) {
                 try {
                     await deleteDoc(doc(db, "customers", id));
                 } catch (error) {
@@ -330,7 +329,7 @@
             }
         }
 
-        // Client-Side Structural Filtering Engine
+        // Client-Side Filtering Engine
         searchBar.onkeyup = function() {
             const streamValue = searchBar.value.toLowerCase();
             const rows = document.querySelectorAll('.customer-row');
@@ -341,7 +340,7 @@
                 const stateNode = row.querySelector('.type-field').textContent.toLowerCase();
                 
                 if (nameNode.includes(streamValue) || phoneNode.includes(streamValue) || stateNode.includes(streamValue)) {
-                    row.style.display = "";
+                    row.style.display = "flex";
                 } else {
                     row.style.display = "none";
                 }
