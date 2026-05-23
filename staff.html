@@ -74,7 +74,7 @@
             </div>
             <div class="apple-blur rounded-2xl p-4 flex items-center justify-between">
                 <div>
-                    <span class="text-[11px] text-neutral-400 font-medium uppercase tracking-wider block">Jars Dispatched</span>
+                    <span class="text-[11px] text-neutral-400 font-medium uppercase tracking-wider block">Jars Delivered</span>
                     <span class="text-xl font-bold text-white mt-1 block font-mono" id="rider-jars">0</span>
                 </div>
                 <div class="h-9 w-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -102,7 +102,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, doc, setDoc, updateDoc, increment, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -136,7 +136,7 @@
         const customersRef = collection(db, "customers");
         
         const DEFAULT_COMM_RATE = 3; 
-        const DEFAULT_JAR_PRICE = 30; // Default price agar customerdb me set na ho
+        const DEFAULT_JAR_PRICE = 30; 
         let isPunchedInToday = false; 
         let globalCustomersMap = new Map();
 
@@ -149,7 +149,7 @@
         const docSlug = `${riderMobileId}_${todayStr}`;
         const attDocRef = doc(db, "rider_attendance", docSlug);
 
-        // Fetch all customers data live to get customized prices
+        // Fetch custom rates and commissions
         onSnapshot(customersRef, (snapshot) => {
             globalCustomersMap.clear();
             snapshot.forEach((doc) => {
@@ -161,11 +161,10 @@
                     });
                 }
             });
-            // Trigger stream update whenever customer DB changes
             triggerPipelineStream();
         });
 
-        // Attendance Real-time Tracker
+        // Attendance live tracker
         onSnapshot(attDocRef, (docSnap) => {
             const container = document.getElementById('dutyStatusContainer');
             if(!container) return;
@@ -202,7 +201,6 @@
         window.triggerPunchIn = async function() {
             try {
                 const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
                 await setDoc(attDocRef, {
                     mobile: riderMobileId,
                     rider: riderDisplayName,
@@ -212,14 +210,10 @@
                 }, { merge: true });
 
                 const walletProfileRef = doc(db, "riders", riderMobileId);
-                await updateDoc(walletProfileRef, {
-                    walletBalance: increment(250)
-                });
-
+                await updateDoc(walletProfileRef, { walletBalance: increment(250) });
                 alert("Punch In Successful! ₹250 Daily Allowance Added to Wallet.");
             } catch (err) {
-                console.error("Shift Write Fault:", err);
-                alert("Error during punch in registry.");
+                console.error(err);
             }
         };
 
@@ -227,16 +221,14 @@
             if(confirm("Confirm action: Do you want to close your daily operation shift profile now?")) {
                 try {
                     const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    await updateDoc(attDocRef, {
-                        punchOut: timeStr
-                    });
+                    await updateDoc(attDocRef, { punchOut: timeStr });
                 } catch (err) {
-                    console.error("Shift Termination Fault:", err);
+                    console.error(err);
                 }
             }
         };
 
-        // Live Order Pipeline Engine Stream Wrapper
+        // Live Order Pipeline Engine
         function triggerPipelineStream() {
             onSnapshot(ordersRef, (snapshot) => {
                 const streamStack = document.getElementById('pipeline-stream-stack');
@@ -252,25 +244,21 @@
                     const docId = orderDoc.id;
 
                     let matchFound = false;
-                    if (data.riderMobile && String(data.riderMobile).trim() === riderMobileId) {
-                        matchFound = true;
-                    } else if (data.assignedRider && String(data.assignedRider).trim() === riderMobileId) {
-                        matchFound = true;
-                    } else if (data.rider && String(data.rider).startsWith(riderMobileId)) {
-                        matchFound = true; 
-                    }
+                    if (data.riderMobile && String(data.riderMobile).trim() === riderMobileId) matchFound = true;
+                    else if (data.assignedRider && String(data.assignedRider).trim() === riderMobileId) matchFound = true;
+                    else if (data.rider && String(data.rider).startsWith(riderMobileId)) matchFound = true;
 
                     if (!matchFound) return; 
 
                     allocatedJobsCount++;
                     const productVolume = parseInt(data.quantity) || 0;
 
-                    // Fetch dynamic price & commission rate configuration from map
                     const custKey = data.customerName ? data.customerName.trim().toLowerCase() : '';
                     const custConfig = globalCustomersMap.get(custKey) || { jarPrice: DEFAULT_JAR_PRICE, commRate: DEFAULT_COMM_RATE };
                     
                     const dynamicJarPrice = custConfig.jarPrice;
                     const dynamicCommRate = custConfig.commRate;
+                    
                     const calculatedTotalBill = productVolume * dynamicJarPrice;
                     const currentOrderCommission = productVolume * dynamicCommRate;
 
@@ -281,25 +269,47 @@
 
                     let visualNodeIcon = '';
                     let pipelineActionBlock = '';
+                    let volumeDisplayBlock = '';
 
                     if(data.status === 'Pending') {
                         visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 z-10 relative"><i class="fa-solid fa-clock text-base"></i></div>`;
+                        volumeDisplayBlock = `<span class="text-xs text-neutral-500 italic block">Pending Allocation</span>`;
                         pipelineActionBlock = `
-                            <button onclick="window.handleStartDelivery('${docId}', '${data.customerName || 'Customer'}', '${data.mobileNumber || ''}', '${data.orderId || 'N/A'}', '${productVolume}')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
+                            <button onclick="window.handleStartDelivery('${docId}', '${data.customerName || 'Customer'}', '${data.mobileNumber || ''}', '${data.orderId || 'N/A'}')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-truck-fast text-cyan-400"></i>
                                 <span>Accept & Start Delivery</span>
                             </button>
                         `;
                     } else if(data.status === 'Out for Delivery') {
                         visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 z-10 relative animate-pulse"><i class="fa-solid fa-truck-fast text-base"></i></div>`;
+                        
+                        // Premium Dynamic Counter Component for Manual Quantity Add
+                        volumeDisplayBlock = `
+                            <div class="flex flex-col items-end space-y-1">
+                                <span class="text-[10px] text-neutral-400 uppercase tracking-wider">Select Jars</span>
+                                <div class="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg p-0.5 overflow-hidden">
+                                    <button onclick="window.adjustJarCounter('${docId}', -1)" class="h-7 w-7 rounded-md bg-neutral-900 hover:bg-neutral-800 text-white font-bold flex items-center justify-center text-xs transition-colors">-</button>
+                                    <input type="number" id="manual-qty-${docId}" value="1" min="1" max="50" class="w-10 bg-transparent text-center font-mono font-bold text-sm text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                    <button onclick="window.adjustJarCounter('${docId}', 1)" class="h-7 w-7 rounded-md bg-neutral-900 hover:bg-neutral-800 text-white font-bold flex items-center justify-center text-xs transition-colors">+</button>
+                                </div>
+                                <span class="text-[10px] text-neutral-500 mt-0.5" id="live-rate-${docId}">Rate: ₹${dynamicJarPrice}/Jar</span>
+                            </div>
+                        `;
+
                         pipelineActionBlock = `
-                            <button onclick="window.updateOrderStatusNode('${docId}', 'progressing well', ${currentOrderCommission})" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-xs font-bold text-white py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-transform flex items-center justify-center space-x-2">
+                            <button onclick="window.submitFinalDelivery('${docId}', ${dynamicJarPrice}, ${dynamicCommRate})" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-xs font-bold text-white py-3 rounded-xl shadow-lg shadow-emerald-500/10 transition-transform flex items-center justify-center space-x-2">
                                 <i class="fa-solid fa-circle-check"></i>
-                                <span>Mark as Order Delivered</span>
+                                <span>Complete Delivery</span>
                             </button>
                         `;
                     } else if(data.status === 'progressing well') {
                         visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 z-10 relative"><i class="fa-solid fa-circle-check text-base"></i></div>`;
+                        volumeDisplayBlock = `
+                            <div class="text-right">
+                                <span class="text-xs font-bold text-neutral-200 block font-mono">${productVolume} x 20L Jars</span>
+                                <span class="text-[11px] text-emerald-400 font-bold block font-mono mt-0.5">Total Bill: ₹${calculatedTotalBill}</span>
+                            </div>
+                        `;
                         pipelineActionBlock = `
                             <div class="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3 text-center text-xs font-medium text-emerald-400/80 flex items-center justify-center space-x-1.5">
                                 <i class="fa-solid fa-square-check"></i>
@@ -317,11 +327,7 @@
                                         <span class="text-[10px] font-mono font-bold tracking-wider text-blue-400 uppercase bg-blue-500/5 border border-blue-500/10 px-2 py-0.5 rounded-md">ID: ${data.orderId || 'N/A'}</span>
                                         <h4 class="text-base font-bold text-white tracking-tight mt-2">${data.customerName || 'Customer'}</h4>
                                     </div>
-                                    <div class="text-right">
-                                        <span class="text-xs font-bold text-neutral-200 block font-mono">${productVolume} x 20L Jars</span>
-                                        <span class="text-[11px] text-emerald-400 font-bold block font-mono mt-1">Total Bill: ₹${calculatedTotalBill}</span>
-                                        <span class="text-[9px] text-neutral-500 block font-mono">Rate: ₹${dynamicJarPrice}/Jar</span>
-                                    </div>
+                                    ${volumeDisplayBlock}
                                 </div>
                                 
                                 <div class="space-y-2 text-xs text-neutral-400 border-t border-neutral-900 pt-3">
@@ -333,7 +339,7 @@
                                         ${data.mobileNumber ? `
                                             <a href="tel:${data.mobileNumber}" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all flex items-center space-x-1">
                                                 <i class="fa-solid fa-phone text-[10px]"></i>
-                                                <span>Call Customer</span>
+                                                <span>Call</span>
                                             </a>
                                         ` : ''}
                                     </div>
@@ -357,8 +363,18 @@
             });
         }
 
-        // Combined handler for changing DB node status and triggering WhatsApp text
-        window.handleStartDelivery = async function(docId, customerName, customerMobile, orderId, quantity) {
+        // Helper helper to handle input button increments inside stream stack safely
+        window.adjustJarCounter = function(id, delta) {
+            const input = document.getElementById(`manual-qty-${id}`);
+            if(input) {
+                let val = parseInt(input.value) || 1;
+                val += delta;
+                if(val < 1) val = 1;
+                input.value = val;
+            }
+        };
+
+        window.handleStartDelivery = async function(docId, customerName, customerMobile, orderId) {
             try {
                 await updateDoc(doc(db, "aquapure_orders", docId), {
                     status: 'Out for Delivery'
@@ -366,46 +382,49 @@
 
                 if(customerMobile) {
                     let formattedPhone = customerMobile.replace(/\D/g, '');
-                    if(formattedPhone.length === 10) {
-                        formattedPhone = "91" + formattedPhone; 
-                    }
+                    if(formattedPhone.length === 10) formattedPhone = "91" + formattedPhone; 
 
-                    const templateMessage = `💧 *AquaPure Delivery Update* 💧%0A%0AHello *${customerName}*, your water supply order *#${orderId}* is out for delivery!%0A%0A🚚 *Rider Name:* ${riderDisplayName}%0A📱 *Rider Mobile:* ${riderMobileId}%0A📦 *Quantity:* ${quantity} x 20L Jars%0A%0AOur rider is on the way and will reach your address shortly. Thank you for choosing AquaPure!`;
-                    
+                    const templateMessage = `💧 *AquaPure Delivery Update* 💧%0A%0AHello *${customerName}*, your water supply order *#${orderId}* is out for delivery!%0A%0A🚚 *Rider Name:* ${riderDisplayName}%0A📱 *Rider Mobile:* ${riderMobileId}%0A%0AOur rider is on the way and will reach your address shortly. Thank you for choosing AquaPure!`;
                     const waUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${templateMessage}`;
                     window.open(waUrl, '_blank');
                 }
             } catch(err) {
-                console.error("Mutation and WhatsApp trigger failed:", err);
-                alert("Error updates allocation nodes.");
+                console.error(err);
             }
         }
 
-        window.updateOrderStatusNode = async function(docId, nextStatusState, commissionAmount) {
-            try {
-                const orderDocRef = doc(db, "aquapure_orders", docId);
-                
-                await updateDoc(orderDocRef, {
-                    status: nextStatusState
-                });
+        // Final Delivery Completion with manual Quantity parsing 
+        window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
+            const inputElement = document.getElementById(`manual-qty-${docId}`);
+            const selectedVolume = inputElement ? (parseInt(inputElement.value) || 1) : 1;
 
-                if (nextStatusState === "progressing well") {
+            if(confirm(`Confirm Delivery: Completing this order with ${selectedVolume} Jars?`)) {
+                try {
+                    const finalCalculatedCommission = selectedVolume * commRate;
+                    const orderDocRef = doc(db, "aquapure_orders", docId);
+                    
+                    // Saving dynamic manual quantity directly inside Firestore collection
+                    await updateDoc(orderDocRef, {
+                        status: 'progressing well',
+                        quantity: selectedVolume
+                    });
+
+                    // Add commission reward directly to wallet balance
                     const walletProfileRef = doc(db, "riders", riderMobileId);
                     await updateDoc(walletProfileRef, {
-                        walletBalance: increment(commissionAmount)
+                        walletBalance: increment(finalCalculatedCommission)
                     });
+
+                } catch (err) {
+                    console.error(err);
+                    alert("Error writing updates to cloud node.");
                 }
-            } catch (err) {
-                console.error("Critical Mutation State Error Exception:", err);
-                alert("Error writing pipeline updates to cloud node.");
             }
         };
 
         function updateMetricsUI(earnings, totalJars) {
             let totalDisplayEarnings = earnings;
-            if (isPunchedInToday) {
-                totalDisplayEarnings += 250; 
-            }
+            if (isPunchedInToday) totalDisplayEarnings += 250; 
             document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
             document.getElementById('rider-jars').innerText = totalJars;
         }
