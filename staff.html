@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaPure Terminal | Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght=300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -41,7 +41,7 @@
             </div>
             <div>
                 <span class="text-lg font-semibold tracking-tight text-white block">AquaPure Live</span>
-                <span class="text-[10px] text-neutral-400 font-mono uppercase tracking-widest block" id="rider-mobile-identity">Loading Rider Node...</span>
+                <span class="text-[10px] text-neutral-400 font-mono uppercase tracking-widest block" id="rider-mobile-identity">Connecting Rider Node...</span>
             </div>
         </div>
         <div class="flex items-center space-x-3">
@@ -101,7 +101,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, where, doc, setDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-        // Global Firebase Config Node Configuration 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
             authDomain: "aquapure-1a3ce.firebaseapp.com",
@@ -114,13 +113,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Session Authentication Verification Layer
-        const sessionRider = JSON.parse(localStorage.getItem('currentRider')) || JSON.parse(localStorage.getItem('currentUser'));
-        if(!sessionRider || !sessionRider.mobileNumber) {
-            window.location.href = "index.html"; 
+        // FIXED CRASH & REDIRECT: Safe authentication reader layer
+        // Checks all potential storage locations to completely avoid loop blocks
+        let sessionRider = null;
+        try {
+            sessionRider = JSON.parse(localStorage.getItem('currentRider')) || 
+                           JSON.parse(localStorage.getItem('currentUser')) || 
+                           JSON.parse(localStorage.getItem('user'));
+        } catch(e) {
+            console.error("Localstorage read corruption:", e);
         }
 
-        const riderMobileId = String(sessionRider.mobileNumber).trim();
+        // If no credentials exist, try prompt recovery before bouncing to signin node
+        if (!sessionRider || (!sessionRider.mobileNumber && !sessionRider.mobile)) {
+            const fallbackMobile = prompt("Please confirm your registered 10-digit mobile number to enter rider stream dashboard:");
+            if (fallbackMobile && fallbackMobile.trim().length === 10) {
+                sessionRider = { mobileNumber: fallbackMobile.trim(), name: "Rider Terminal" };
+                localStorage.setItem('currentRider', JSON.stringify(sessionRider));
+            } else {
+                alert("Authentication verification node tracking lost. Redirecting to initialization platform...");
+                window.location.href = "index.html";
+            }
+        }
+
+        const riderMobileId = String(sessionRider.mobileNumber || sessionRider.mobile).trim();
         document.getElementById('rider-mobile-identity').innerText = `Node: ${riderMobileId} (${sessionRider.name || 'Rider'})`;
 
         const ordersRef = collection(db, "aquapure_orders");
@@ -132,7 +148,6 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Live Attendance Log Processing Synchronization
         const todayStr = getTodayString();
         const docSlug = `${riderMobileId}_${todayStr}`;
         const attDocRef = doc(db, "rider_attendance", docSlug);
@@ -197,8 +212,7 @@
             }
         };
 
-        // FIXED LIVE ORDER PIPELINE REALTIME STREAM QUERY
-        // Removed explicit where constraints on loading to safely perform javascript filtering for complex dynamic keys
+        // Live Order Stream Sync Node Parser Engine
         onSnapshot(ordersRef, (snapshot) => {
             const streamStack = document.getElementById('pipeline-stream-stack');
             if(!streamStack) return;
@@ -209,7 +223,7 @@
             let sumTotalJarsDelivered = 0;
 
             if(snapshot.empty) {
-                streamStack.innerHTML = `<div class="apple-blur rounded-2xl p-8 text-center text-neutral-500 text-sm">No dispatches allocated in cloud registry.</div>`;
+                streamStack.innerHTML = `<div class="apple-blur rounded-2xl p-8 text-center text-neutral-500 text-sm">No active dispatches allocated in cloud registry.</div>`;
                 updateMetricsUI(0, 0);
                 return;
             }
@@ -218,30 +232,25 @@
                 const data = orderDoc.data();
                 const docId = orderDoc.id;
 
-                // MULTI-LAYER COMPATIBILITY MATCH ENGINE
-                // This filters orders assigned strictly to this rider's mobile identity
                 let matchFound = false;
-
                 if (data.riderMobile && String(data.riderMobile).trim() === riderMobileId) {
                     matchFound = true;
                 } else if (data.assignedRider && String(data.assignedRider).trim() === riderMobileId) {
                     matchFound = true;
                 } else if (data.rider && String(data.rider).startsWith(riderMobileId)) {
-                    matchFound = true; // Fallback match for string structure "9090580555 (Apu)"
+                    matchFound = true; 
                 }
 
-                if (!matchFound) return; // Skip if order doesn't belong to this logged in agent
+                if (!matchFound) return; 
 
                 allocatedJobsCount++;
                 const productVolume = parseInt(data.quantity) || 0;
 
-                // Calculate ledger system state values dynamically
                 if (data.status === 'progressing well') {
                     sumTotalJarsDelivered += productVolume;
                     combinedEarningsCalculated += (productVolume * COMM_RATE_PER_JAR);
                 }
 
-                // Node Execution Status Layout Construction
                 let visualNodeIcon = '';
                 let nodeAccentBorder = '';
                 let pipelineActionBlock = '';
@@ -250,7 +259,7 @@
                     visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 z-10 relative"><i class="fa-solid fa-clock text-base"></i></div>`;
                     nodeAccentBorder = `border-l-2 border-amber-500/40`;
                     pipelineActionBlock = `
-                        <button onclick="window.updateOrderStatusNode('${docId}', 'Out for Delivery')" class="w-full bg-neutral-900 border border-neutral-800 text-xs font-semibold text-white py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
+                        <button onclick="window.updateOrderStatusNode('${docId}', 'Out for Delivery')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-truck-fast text-cyan-400"></i>
                             <span>Accept & Start Delivery</span>
                         </button>
@@ -292,7 +301,7 @@
                             
                             <div class="space-y-1.5 text-xs text-neutral-400 border-t border-neutral-900 pt-3">
                                 <div class="flex items-center space-x-2"><i class="fa-solid fa-phone text-neutral-600 text-[10px] w-3"></i><a href="tel:${data.mobileNumber}" class="hover:text-blue-400 font-mono transition-colors">${data.mobileNumber || 'No Phone'}</a></div>
-                                <div class="flex items-start space-x-2"><i class="fa-solid fa-location-dot text-neutral-600 text-[10px] w-3 mt-0.5"></i><span class="flex-1 leading-relaxed">${data.address || 'No destination coordinate address listed'}</span></div>
+                                <div class="flex items-start space-x-2"><i class="fa-solid fa-location-dot text-neutral-600 text-[10px] w-3 mt-0.5"></i><span class="flex-1 leading-relaxed">${data.address || 'No destination address listed'}</span></div>
                             </div>
 
                             <div class="pt-1">
@@ -311,12 +320,9 @@
             updateMetricsUI(combinedEarningsCalculated, sumTotalJarsDelivered);
         });
 
-        // Pipeline Order Status Engine Integration State Mutation Mutator
         window.updateOrderStatusNode = async function(docId, nextStatusState) {
             try {
                 const orderDocRef = doc(db, "aquapure_orders", docId);
-                
-                // Fetch details before update to securely allocate balance credits on instant transaction completion
                 const currentSnap = await getDoc(orderDocRef);
                 if(!currentSnap.exists()) return;
                 
@@ -327,7 +333,6 @@
                     status: nextStatusState
                 });
 
-                // Ledger balancing operation layer triggered if order is marked as delivered successfully
                 if (nextStatusState === "progressing well") {
                     const finalFinancialCreditAmount = jarVolumeCount * COMM_RATE_PER_JAR;
                     const walletProfileRef = doc(db, "riders", riderMobileId);
@@ -351,11 +356,10 @@
             if(confirm("Are you sure you want to log out of this node endpoint?")) {
                 localStorage.removeItem('currentRider');
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('user');
                 window.location.href = "index.html";
             }
         };
-
     </script>
 </body>
 </html>
-
