@@ -351,6 +351,19 @@
             }
         };
 
+        // NEW: DELETE RIDER PERMANENTLY FUNCTION
+        window.deleteRiderRecord = async function(riderSlug, riderName) {
+            if (confirm(`Warning: Are you sure you want to completely remove ${riderName} (${riderSlug}) from the database? This cannot be undone.`)) {
+                try {
+                    await deleteDoc(doc(db, "riders", riderSlug));
+                    alert(`Rider profile ${riderSlug} successfully deleted.`);
+                } catch (error) {
+                    console.error("Error removing rider document:", error);
+                    alert("Failed to delete rider profile.");
+                }
+            }
+        };
+
         const todayStr = getTodayString();
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
@@ -388,11 +401,10 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 
-                // ABSOLUTE FIX: Pulling registration fields directly from document fields
-                let displayName = walletDoc.displayName || walletDoc.name || "";
+                // CRITICAL FIX: Explicitly targeting 'name' property fields as shown in signup snapshot
+                let displayName = walletDoc.name || walletDoc.displayName || "";
                 displayName = displayName.trim();
                 
-                // Clean Fallback checks to stop raw loops
                 if (!displayName || displayName === slug) {
                     displayName = "Rider";
                 }
@@ -426,10 +438,9 @@
                     `;
                 }
 
-                // Generates initial correctly (e.g., Apu -> AP, Semaaa -> SE)
                 const agentInitial = String(displayName).substring(0, 2).toUpperCase();
                 
-                // PARSED FIXED DISPLAY FORMAT: 9090580555 (Apu)
+                // MATCHED REQUEST FORMAT: 9090580555 (Apu)
                 const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${displayName})</span>`;
 
                 const itemHtml = `
@@ -450,10 +461,15 @@
                                 <span class="text-xs text-neutral-400 font-medium">Wallet:</span>
                                 <span class="text-xs font-bold text-white font-mono">₹${Number(balanceAmount).toFixed(2)}</span>
                             </div>
-                            <button onclick="window.triggerPasswordUpdate('${slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors">
-                                <i class="fa-solid fa-key text-[10px]"></i>
-                                <span>Update Key</span>
-                            </button>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="window.triggerPasswordUpdate('${slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors" title="Change Rider Password">
+                                    <i class="fa-solid fa-key text-[10px]"></i>
+                                    <span>Pass</span>
+                                </button>
+                                <button onclick="window.deleteRiderRecord('${slug}', '${displayName}')" class="text-neutral-500 hover:text-rose-400 transition-colors p-1" title="Delete Rider Profile">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -469,14 +485,14 @@
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
                 
-                let displayName = walletDoc.displayName || walletDoc.name || "";
+                let displayName = walletDoc.name || walletDoc.displayName || "";
                 displayName = displayName.trim();
                 
                 if (!displayName || displayName === slug) {
                     displayName = "Rider";
                 }
                 
-                // DROPDOWN STRICT FORMAT FIX: 9090580555 (Apu)
+                // ALLOCATED SYNC FORMAT: 9090580555 (Apu)
                 const selectValueAndLabel = `${slug} (${displayName})`;
                 
                 const option = document.createElement('option');
