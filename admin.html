@@ -177,7 +177,7 @@
                     </div>
                     
                     <div id="dropdownPanel" class="hidden absolute left-0 right-0 mt-2 max-h-60 overflow-y-auto rounded-xl bg-neutral-950/95 border border-neutral-800 backdrop-blur-xl shadow-2xl z-50 custom-scrollbar divide-y divide-neutral-900">
-                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number</label>
@@ -195,7 +195,7 @@
                     <div>
                         <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
                        <select id="riderSelect" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-    </select>
+                       </select>
                     </div>
                 </div>
                 <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
@@ -224,7 +224,7 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
-        const RATE_PER_JAR = 30; // Global pricing rate parameter
+        const RATE_PER_JAR = 30; 
 
         let activeCustomerDirectory = [];
 
@@ -233,16 +233,15 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
-        // Helper function to capitalize names (e.g., abinashhhhhh -> Abinashhhhhh)
         function formatToTitleCase(str) {
             if (!str) return '';
+            if (!isNaN(str)) return str; // Agar string numeric phone number hai toh as-is rakhein
             return str.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
         }
 
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
-        // Dynamically build and extract distinct profiles straight from live orders stream
         function extractUniqueCustomers(ordersSnapshot) {
             const tempMap = new Map();
             
@@ -312,7 +311,6 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
-        // Handle Add Order Flow
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
@@ -365,7 +363,7 @@
         let localRiderWallets = {};
 
         onSnapshot(ridersRef, (walletSnapshot) => {
-            localRiderWallets = {}; // Reset
+            localRiderWallets = {}; 
             walletSnapshot.forEach((wDoc) => {
                 localRiderWallets[wDoc.id] = wDoc.data();
             });
@@ -387,10 +385,11 @@
             if(!rosterStack) return;
             rosterStack.innerHTML = '';
 
-            const activeRidersInLogs = {};
+            // Map keys dynamically across flexible parameters (Lower-case login key, mobile, profile name string checks)
+            const activeRidersMap = new Map();
             currentAttendanceData.forEach(data => {
-                const cleanName = (data.rider || "").toLowerCase().trim();
-                activeRidersInLogs[cleanName] = data;
+                if (data.mobile) activeRidersMap.set(String(data.mobile).trim(), data);
+                if (data.rider) activeRidersMap.set(String(data.rider).toLowerCase().trim(), data);
             });
 
             const targetAgents = Object.keys(localRiderWallets).map(slug => ({
@@ -399,8 +398,11 @@
             }));
 
             targetAgents.forEach(agent => {
-                const agentNameLower = agent.name.toLowerCase().trim();
-                const logData = activeRidersInLogs[agentNameLower];
+                const slugStr = String(agent.slug).trim();
+                const nameStrLower = String(agent.name).toLowerCase().trim();
+                
+                // Flexible conditional tracking fallback matching matrix
+                const logData = activeRidersMap.get(slugStr) || activeRidersMap.get(nameStrLower);
                 
                 const walletDoc = localRiderWallets[agent.slug] || {};
                 
@@ -425,20 +427,25 @@
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium">Completed</span>`;
                     dutyTimingText = `
                         <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-neutral-400 font-mono">${logData.punchIn}</span></div>
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-emerald-400 font-mono">${logData.punchIn}</span></div>
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-rose-400 font-mono">${logData.punchOut}</span></div>
                         </div>
                     `;
                 }
 
-                const agentInitial = agent.name.split(' ').map(n => n[0]).join('');
+                const agentInitial = agent.name.substring(0, 2).toUpperCase();
+                
+                // Requirement Fix: Displays Username/Number first, followed by Display Name in brackets
+                const cardHeaderLabel = isNaN(agent.slug) 
+                    ? `${agent.slug} <span class="text-neutral-400 font-normal text-xs">(${agent.name})</span>`
+                    : `${agent.slug} <span class="text-neutral-400 font-normal text-xs">(${walletDoc.name || agent.name})</span>`;
 
                 const itemHtml = `
                     <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-4 space-y-3.5">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center space-x-2.5">
-                                <div class="h-7 w-7 rounded-full bg-neutral-800 text-xs flex items-center justify-center font-bold text-blue-400 border border-neutral-700">${agentInitial}</div>
-                                <span class="text-sm font-medium text-white">${agent.name}</span>
+                                <div class="h-7 w-7 rounded-full bg-neutral-800 text-[10px] flex items-center justify-center font-bold text-blue-400 border border-neutral-700">${agentInitial}</div>
+                                <span class="text-sm font-semibold text-white tracking-tight">${cardHeaderLabel}</span>
                             </div>
                             ${statusBadge}
                         </div>
@@ -476,7 +483,6 @@
             });
         }
 
-        // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
             extractUniqueCustomers(snapshot);
 
