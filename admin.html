@@ -387,7 +387,12 @@
 
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
-                const riderName = walletDoc.name || slug;
+                
+                // CRITICAL FIX: If database name is missing, fallback cleanly without recursive duplicate mapping
+                let riderName = walletDoc.name ? walletDoc.name.trim() : "";
+                if (!riderName || riderName === slug) {
+                    riderName = "Rider";
+                }
                 
                 const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(riderName).toLowerCase().trim());
                 
@@ -420,7 +425,7 @@
 
                 const agentInitial = String(riderName).substring(0, 2).toUpperCase();
                 
-                // FIXED FORMAT FOR ROSTER CARDS: Number (Display Name)
+                // FORMATTED STRICT AS REQUESTED: 9090580555 (Apu)
                 const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${riderName})</span>`;
 
                 const itemHtml = `
@@ -459,9 +464,13 @@
             
             Object.keys(localRiderWallets).forEach(slug => {
                 const walletDoc = localRiderWallets[slug] || {};
-                const riderName = walletDoc.name || slug;
                 
-                // FIXED FORMAT FOR DROPDOWN OPTIONS: Number (Display Name)
+                let riderName = walletDoc.name ? walletDoc.name.trim() : "";
+                if (!riderName || riderName === slug) {
+                    riderName = "Rider";
+                }
+                
+                // DROPDOWN OPTION FORMAT FIXED: 9090580555 (Apu)
                 const selectValueAndLabel = `${slug} (${riderName})`;
                 
                 const option = document.createElement('option');
