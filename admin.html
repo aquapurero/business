@@ -357,15 +357,15 @@
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
         let localRiderWallets = {};
-        // Is block ko aise update karein:
-onSnapshot(ridersRef, (walletSnapshot) => {
-    localRiderWallets = {}; // Reset
-    walletSnapshot.forEach((wDoc) => {
-        localRiderWallets[wDoc.id] = wDoc.data();
-    });
-    refreshRiderRosterLayout();
-    loadRiderDropdown(); // <--- Ye nayi line yahan add karein
-});
+
+        onSnapshot(ridersRef, (walletSnapshot) => {
+            localRiderWallets = {}; // Reset
+            walletSnapshot.forEach((wDoc) => {
+                localRiderWallets[wDoc.id] = wDoc.data();
+            });
+            refreshRiderRosterLayout();
+            loadRiderDropdown(); 
+        });
 
         let currentAttendanceData = [];
         onSnapshot(attendanceQuery, (snapshot) => {
@@ -381,26 +381,22 @@ onSnapshot(ridersRef, (walletSnapshot) => {
             if(!rosterStack) return;
             rosterStack.innerHTML = '';
 
-                        const activeRidersInLogs = {};
+            const activeRidersInLogs = {};
             currentAttendanceData.forEach(data => {
-                // Naam ko lower case karke map mein save karo
                 const cleanName = (data.rider || "").toLowerCase().trim();
                 activeRidersInLogs[cleanName] = data;
             });
 
-            // Is code ko line 389 se 392 ki jagah lagayein
-const targetAgents = Object.keys(localRiderWallets).map(slug => ({
-    name: slug.replace(/_/g, ' '),
-    slug: slug
-}));
+            const targetAgents = Object.keys(localRiderWallets).map(slug => ({
+                name: slug.replace(/_/g, ' '),
+                slug: slug
+            }));
 
-                        targetAgents.forEach(agent => {
-                // Yahan agent name ko bhi lower case karke match karo
+            targetAgents.forEach(agent => {
                 const agentNameLower = agent.name.toLowerCase().trim();
                 const logData = activeRidersInLogs[agentNameLower];
                 
                 const walletDoc = localRiderWallets[agent.slug] || {};
-                // ... baaki pura code same rahega
                 
                 let balanceAmount = walletDoc.walletBalance || 0;
                 if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
@@ -460,20 +456,20 @@ const targetAgents = Object.keys(localRiderWallets).map(slug => ({
             });
         }
 
+        async function loadRiderDropdown() {
+            const riderSelect = document.getElementById('riderSelect');
+            if (!riderSelect) return;
+            riderSelect.innerHTML = '<option value="">Select a Rider</option>';
+            
+            Object.keys(localRiderWallets).forEach(slug => {
+                const displayName = slug.replace(/_/g, ' ');
+                const option = document.createElement('option');
+                option.value = displayName;
+                option.textContent = displayName;
+                riderSelect.appendChild(option);
+            });
+        }
 
-// Ye function yahan paste karein
-async function loadRiderDropdown() {
-    const riderSelect = document.getElementById('riderSelect');
-    riderSelect.innerHTML = '<option value="">Select a Rider</option>';
-    
-    Object.keys(localRiderWallets).forEach(slug => {
-        const displayName = slug.replace(/_/g, ' ');
-        const option = document.createElement('option');
-        option.value = displayName;
-        option.textContent = displayName;
-        riderSelect.appendChild(option);
-    });
-}
         // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
             extractUniqueCustomers(snapshot);
