@@ -233,10 +233,10 @@
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
+        // Dropdown me plain value dikhane ke liye changes
         function formatToTitleCase(str) {
             if (!str) return '';
-            if (!isNaN(str)) return str; // Agar string numeric phone number hai toh as-is rakhein
-            return str.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+            return str.replace(/_/g, ' ');
         }
 
         const custNameInput = document.getElementById('custName');
@@ -342,7 +342,7 @@
         };
 
         window.triggerPasswordUpdate = async function(riderSlug) {
-            const newPassword = prompt(`Enter new application password for ${formatToTitleCase(riderSlug)}:`);
+            const newPassword = prompt(`Enter new application password for ${riderSlug}:`);
             if (newPassword && newPassword.trim().length > 0) {
                 try {
                     const profileRef = doc(db, "riders", riderSlug);
@@ -352,7 +352,7 @@
                     alert("Rider authentication credential synchronized successfully.");
                 } catch (err) {
                     console.error("Security write blocked:", err);
-                    alert("Failed to write password. Check Firestore security parameters.");
+                    alert("Failed to write password.");
                 }
             }
         };
@@ -385,26 +385,18 @@
             if(!rosterStack) return;
             rosterStack.innerHTML = '';
 
-            // Map keys dynamically across flexible parameters (Lower-case login key, mobile, profile name string checks)
             const activeRidersMap = new Map();
             currentAttendanceData.forEach(data => {
                 if (data.mobile) activeRidersMap.set(String(data.mobile).trim(), data);
                 if (data.rider) activeRidersMap.set(String(data.rider).toLowerCase().trim(), data);
             });
 
-            const targetAgents = Object.keys(localRiderWallets).map(slug => ({
-                name: formatToTitleCase(slug),
-                slug: slug
-            }));
-
-            targetAgents.forEach(agent => {
-                const slugStr = String(agent.slug).trim();
-                const nameStrLower = String(agent.name).toLowerCase().trim();
+            Object.keys(localRiderWallets).forEach(slug => {
+                const walletDoc = localRiderWallets[slug] || {};
+                const riderName = walletDoc.name || slug;
                 
-                // Flexible conditional tracking fallback matching matrix
-                const logData = activeRidersMap.get(slugStr) || activeRidersMap.get(nameStrLower);
-                
-                const walletDoc = localRiderWallets[agent.slug] || {};
+                // Flexible matching logic for Saira / 8984225322
+                const logData = activeRidersMap.get(String(slug).trim()) || activeRidersMap.get(String(riderName).toLowerCase().trim());
                 
                 let balanceAmount = walletDoc.walletBalance || 0;
                 if (typeof balanceAmount === 'string') balanceAmount = parseFloat(balanceAmount) || 0;
@@ -427,18 +419,16 @@
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] border border-rose-500/20 bg-rose-500/10 text-rose-400 font-medium">Completed</span>`;
                     dutyTimingText = `
                         <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-emerald-400 font-mono">${logData.punchIn}</span></div>
+                            <div><span class="text-neutral-500 block text-[10px] uppercase">Punched In</span><span class="text-neutral-400 font-mono">${logData.punchIn}</span></div>
                             <div><span class="text-neutral-500 block text-[10px] uppercase">Punched Out</span><span class="text-rose-400 font-mono">${logData.punchOut}</span></div>
                         </div>
                     `;
                 }
 
-                const agentInitial = agent.name.substring(0, 2).toUpperCase();
+                const agentInitial = String(riderName).substring(0, 2).toUpperCase();
                 
-                // Requirement Fix: Displays Username/Number first, followed by Display Name in brackets
-                const cardHeaderLabel = isNaN(agent.slug) 
-                    ? `${agent.slug} <span class="text-neutral-400 font-normal text-xs">(${agent.name})</span>`
-                    : `${agent.slug} <span class="text-neutral-400 font-normal text-xs">(${walletDoc.name || agent.name})</span>`;
+                // Format: Number (Name) ya Name (Slug) agar numeric text nahi hai to
+                const cardHeaderLabel = `${slug} <span class="text-neutral-400 font-normal text-xs">(${riderName})</span>`;
 
                 const itemHtml = `
                     <div class="bg-neutral-900/40 border border-neutral-800/80 rounded-xl p-4 space-y-3.5">
@@ -458,7 +448,7 @@
                                 <span class="text-xs text-neutral-400 font-medium">Wallet:</span>
                                 <span class="text-xs font-bold text-white font-mono">₹${Number(balanceAmount).toFixed(2)}</span>
                             </div>
-                            <button onclick="window.triggerPasswordUpdate('${agent.slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors">
+                            <button onclick="window.triggerPasswordUpdate('${slug}')" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1 transition-colors">
                                 <i class="fa-solid fa-key text-[10px]"></i>
                                 <span>Update Key</span>
                             </button>
@@ -475,10 +465,13 @@
             riderSelect.innerHTML = '<option value="">Select a Rider</option>';
             
             Object.keys(localRiderWallets).forEach(slug => {
-                const displayName = formatToTitleCase(slug);
+                const walletDoc = localRiderWallets[slug] || {};
+                const riderName = walletDoc.name || slug;
+                const selectLabel = `${slug} (${riderName})`;
+                
                 const option = document.createElement('option');
-                option.value = displayName;
-                option.textContent = displayName;
+                option.value = selectLabel;
+                option.textContent = selectLabel;
                 riderSelect.appendChild(option);
             });
         }
