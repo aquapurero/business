@@ -358,12 +358,15 @@
         const attendanceQuery = query(attendanceRef, where("date", "==", todayStr));
 
         let localRiderWallets = {};
-        onSnapshot(ridersRef, (walletSnapshot) => {
-            walletSnapshot.forEach((wDoc) => {
-                localRiderWallets[wDoc.id] = wDoc.data();
-            });
-            refreshRiderRosterLayout();
-        });
+        // Is block ko aise update karein:
+onSnapshot(ridersRef, (walletSnapshot) => {
+    localRiderWallets = {}; // Reset
+    walletSnapshot.forEach((wDoc) => {
+        localRiderWallets[wDoc.id] = wDoc.data();
+    });
+    refreshRiderRosterLayout();
+    loadRiderDropdown(); // <--- Ye nayi line yahan add karein
+});
 
         let currentAttendanceData = [];
         onSnapshot(attendanceQuery, (snapshot) => {
@@ -458,6 +461,20 @@ const targetAgents = Object.keys(localRiderWallets).map(slug => ({
             });
         }
 
+
+// Ye function yahan paste karein
+async function loadRiderDropdown() {
+    const riderSelect = document.getElementById('riderSelect');
+    riderSelect.innerHTML = '<option value="">Select a Rider</option>';
+    
+    Object.keys(localRiderWallets).forEach(slug => {
+        const displayName = slug.replace(/_/g, ' ');
+        const option = document.createElement('option');
+        option.value = displayName;
+        option.textContent = displayName;
+        riderSelect.appendChild(option);
+    });
+}
         // Live Orders Monitor Table Core Synchronizer
         onSnapshot(ordersRef, (snapshot) => {
             extractUniqueCustomers(snapshot);
