@@ -371,6 +371,7 @@ const attendanceDocId = `${getTodayString()}_${loggedInUser}`;
             unsubscribeTasks = onSnapshot(q, (snapshot) => {
                 const container = document.getElementById('task-container');
                 container.innerHTML = '';
+                console.log("Searching for rider:", currentRider, "Found count:", snapshot.size);
                 let activeTasks = 0;
                 let finishedTasks = 0;
 
