@@ -192,16 +192,10 @@
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
                     <textarea id="custAddress" required rows="2" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Full local address"></textarea>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Quantity (20L Jars)</label>
-                        <input type="number" id="custQty" required min="1" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Number of jars">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
-                       <select id="riderSelect" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
-                       </select>
-                    </div>
+                <div>
+                    <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Assign Delivery Agent</label>
+                    <select id="riderSelect" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+                    </select>
                 </div>
                 <button type="submit" class="w-full gradient-btn text-white font-medium py-3 rounded-xl mt-2">
                     Deploy Order to Rider App
@@ -229,10 +223,10 @@
         const ordersRef = collection(db, "aquapure_orders");
         const attendanceRef = collection(db, "rider_attendance");
         const ridersRef = collection(db, "riders");
-        const customersRef = collection(db, "customers"); // Linked directly to customerdb.html
+        const customersRef = collection(db, "customers");
         
-        const RATE_PER_JAR = 30; 
         let globalCustomerDirectory = [];
+        let globalCustomerPricingMap = new Map();
 
         function getTodayString() {
             const d = new Date();
@@ -242,16 +236,22 @@
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
-        // REAL-TIME DROPDOWN FETCH FROM CUSTOMERS COLLECTION
+        // REAL-TIME DROPDOWN FETCH FROM CUSTOMERS COLLECTION WITH PRICING
         onSnapshot(query(customersRef, orderBy("name", "asc")), (snapshot) => {
             globalCustomerDirectory = [];
+            globalCustomerPricingMap.clear();
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                globalCustomerDirectory.push({
-                    customerName: data.name || '',
-                    mobileNumber: data.phone || '',
-                    address: data.address || ''
-                });
+                if(data.name) {
+                    const mappedData = {
+                        customerName: data.name || '',
+                        mobileNumber: data.phone || '',
+                        address: data.address || '',
+                        jarPrice: parseFloat(data.price) || parseFloat(data.jarPrice) || 30
+                    };
+                    globalCustomerDirectory.push(mappedData);
+                    globalCustomerPricingMap.set(data.name.trim().toLowerCase(), mappedData.jarPrice);
+                }
             });
             renderDropdownItems(custNameInput.value);
         });
@@ -306,7 +306,7 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
-        // FORM SUBMISSION ENGINE
+        // FORM SUBMISSION ENGINE (Quantity Input Field Completely Dropped)
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
@@ -327,7 +327,7 @@
                     customerName: document.getElementById('custName').value.trim(),
                     mobileNumber: document.getElementById('custMobile').value.trim(),
                     address: document.getElementById('custAddress').value.trim(),
-                    quantity: parseInt(document.getElementById('custQty').value) || 0,
+                    quantity: 0, // Set to 0 initially, staff will decide on their panel
                     status: "Pending",
                     timestamp: serverTimestamp(),
                     
@@ -510,7 +510,9 @@
                 total++;
 
                 const jars = parseInt(data.quantity) || 0;
-                const totalCharge = jars * RATE_PER_JAR;
+                const custKey = data.customerName ? data.customerName.trim().toLowerCase() : '';
+                const currentCustJarPrice = globalCustomerPricingMap.get(custKey) || 30; // Customer DB se custom live price fetch karega
+                const totalCharge = jars * currentCustJarPrice;
 
                 let statusBadge = '';
                 if(data.status === 'Pending') {
@@ -524,6 +526,11 @@
                     statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>Delivered</span>`;
                 }
 
+                // Render condition checking if quantity is selected by staff or waiting
+                const quantityDisplay = jars > 0 ? `${jars} Jars` : `<span class="text-neutral-500 italic text-xs">Waiting for Rider...</span>`;
+                const pricingBreakdownDisplay = jars > 0 ? `₹${currentCustJarPrice} × ${jars}` : `Rate: ₹${currentCustJarPrice}/Jar`;
+                const totalBillDisplay = jars > 0 ? `Total: ₹${totalCharge}` : `Pending Total`;
+
                 const row = `
                     <tr class="hover:bg-neutral-900/30 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
@@ -533,9 +540,9 @@
                             <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address || 'No Address'}</div>
                         </td>
                         <td class="px-6 py-4">
-                            <div class="font-medium text-neutral-200">${jars} Jars</div>
-                            <div class="text-xs text-neutral-500 font-mono mt-0.5">₹${RATE_PER_JAR} × ${jars}</div>
-                            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">Total: ₹${totalCharge}</div>
+                            <div class="font-medium text-neutral-200">${quantityDisplay}</div>
+                            <div class="text-xs text-neutral-500 font-mono mt-0.5">${pricingBreakdownDisplay}</div>
+                            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">${totalBillDisplay}</div>
                         </td>
                         <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
                         <td class="px-6 py-4">${statusBadge}</td>
