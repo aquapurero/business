@@ -124,11 +124,16 @@
                     <p class="text-xs text-neutral-400 mt-0.5">Real-time repository for centralized client nodes</p>
                 </div>
                 
-                <div class="relative w-full sm:w-72">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-neutral-500">
-                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                    </span>
-                    <input type="text" id="searchBar" class="block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500/80 text-xs transition-all placeholder:text-neutral-500" placeholder="Search by name, frequency or mobile...">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button id="bulkSendBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0">
+                        <i class="fa-solid fa-bolt"></i> Bulk Send
+                    </button>
+                    <div class="relative w-full sm:w-64">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-neutral-500">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" id="searchBar" class="block w-full bg-neutral-900/60 border border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500/80 text-xs transition-all placeholder:text-neutral-500" placeholder="Search...">
+                    </div>
                 </div>
             </div>
 
@@ -155,7 +160,9 @@
             doc, 
             updateDoc, 
             deleteDoc, 
-            serverTimestamp 
+            serverTimestamp,
+            where,
+            getDocs 
         } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -173,11 +180,40 @@
         const customerForm = document.getElementById('customerForm');
         const matrixContainer = document.getElementById('matrixContainer');
         const searchBar = document.getElementById('searchBar');
+        const bulkSendBtn = document.getElementById('bulkSendBtn');
 
-        // Form Submit Handler (Saves default 'Regular' deliveryType)
+        // Bulk Send Logic
+        bulkSendBtn.onclick = async () => {
+            const rider = prompt("Enter Rider Name for assignment:");
+            if (!rider) return;
+            if(!confirm(`Assign all 'Regular' customers to ${rider}?`)) return;
+
+            try {
+                const q = query(collection(db, "customers"), where("deliveryType", "==", "Regular"));
+                const querySnapshot = await getDocs(q);
+                
+                const promises = querySnapshot.docs.map(item => {
+                    const data = item.data();
+                    return addDoc(collection(db, "aquapure_orders"), {
+                        customerName: data.name,
+                        phone: data.phone,
+                        address: data.address,
+                        quantity: data.defaultQty,
+                        rider: rider,
+                        status: "Pending",
+                        timestamp: serverTimestamp()
+                    });
+                });
+                await Promise.all(promises);
+                alert("Bulk dispatch successful!");
+            } catch (err) {
+                console.error(err);
+                alert("Bulk dispatch failed.");
+            }
+        };
+
         customerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const name = document.getElementById('name').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const address = document.getElementById('address').value.trim();
@@ -186,43 +222,26 @@
 
             try {
                 await addDoc(collection(db, "customers"), {
-                    name: name,
-                    phone: phone,
-                    address: address,
+                    name, phone, address, 
                     price: parseFloat(price),
                     defaultQty: parseInt(defaultQty) || 1,
-                    deliveryType: "Regular", // Form data default assignment 
+                    deliveryType: "Regular",
                     createdAt: serverTimestamp()
                 });
-                alert("Customer Profile safely archived inside cloud mesh!");
+                alert("Customer Profile safely archived!");
                 customerForm.reset();
-                document.getElementById('defaultQty').value = "1";
             } catch (error) {
-                console.error("Critical Storage Error Exception:", error);
                 alert("Writing to Cloud Failed.");
             }
         });
 
-        // Live Cloud Data Feed Syncer mapped into Matrix Cards
         const q = query(collection(db, "customers"), orderBy("createdAt", "desc"));
-        
         onSnapshot(q, (snapshot) => {
             matrixContainer.innerHTML = "";
-            
-            if (snapshot.empty) {
-                matrixContainer.innerHTML = `
-                    <div class="apple-blur rounded-2xl p-10 text-center text-neutral-500 font-medium text-sm">
-                        <i class="fa-solid fa-folder-open text-xl text-neutral-600 block mb-2"></i>
-                        No customer entities synced inside the node stream.
-                    </div>`;
-                return;
-            }
-
             snapshot.forEach((snapshotDoc) => {
                 const data = snapshotDoc.data();
                 const id = snapshotDoc.id;
-
-                const dQty = data.defaultQty !== undefined ? data.defaultQty : 1;
+                const dQty = data.defaultQty || 1;
                 const dType = data.deliveryType || "Regular";
 
                 const typeBadge = dType === "Regular" 
@@ -246,7 +265,6 @@
                             <span class="line-clamp-2">${data.address}</span>
                         </div>
                     </div>
-
                     <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-t-0 border-neutral-900 pt-3 sm:pt-0">
                         <div class="flex items-center space-x-2.5">
                             <div class="flex flex-col items-center">
@@ -258,15 +276,14 @@
                                 <input type="number" value="${data.price}" id="price-${id}" class="w-16 bg-neutral-950 border border-neutral-800 rounded-lg py-1 text-xs text-center font-mono text-emerald-400 font-bold focus:outline-none focus:border-blue-500">
                             </div>
                         </div>
-
                         <div class="flex items-center space-x-2 self-end sm:self-center">
-                            <button data-id="${id}" class="update-btn h-9 w-9 bg-blue-500/10 hover:bg-blue-600 border border-blue-500/20 text-blue-400 hover:text-white rounded-xl flex items-center justify-center transition-all" title="Sync Parameters">
+                            <button onclick="saveInlineEdits('${id}')" class="h-9 w-9 bg-blue-500/10 hover:bg-blue-600 border border-blue-500/20 text-blue-400 hover:text-white rounded-xl flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-rotate text-xs"></i>
                             </button>
-                            <button data-id="${id}" class="toggle-type-btn h-9 w-9 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 rounded-xl flex items-center justify-center transition-all" title="Toggle Frequency Mode (Regular / Inregular)">
+                            <button onclick="switchTypeProfile('${id}')" class="h-9 w-9 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 rounded-xl flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-arrows-left-right text-xs"></i>
                             </button>
-                            <button data-id="${id}" class="delete-btn h-9 w-9 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-400 hover:text-white rounded-xl flex items-center justify-center transition-all" title="Delete Customer Profile">
+                            <button onclick="purgeDocumentNode('${id}')" class="h-9 w-9 bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 text-rose-400 hover:text-white rounded-xl flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </div>
@@ -274,76 +291,30 @@
                 `;
                 matrixContainer.appendChild(nodeCard);
             });
-
-            // Action Handlers
-            document.querySelectorAll('.update-btn').forEach(btn => {
-                btn.onclick = () => saveInlineEdits(btn.getAttribute('data-id'));
-            });
-            document.querySelectorAll('.toggle-type-btn').forEach(btn => {
-                btn.onclick = () => switchTypeProfile(btn.getAttribute('data-id'));
-            });
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.onclick = () => purgeDocumentNode(btn.getAttribute('data-id'));
-            });
         });
 
-        // Inline Qty & Price Parameters Multi-update
-        async function saveInlineEdits(id) {
+        window.saveInlineEdits = async (id) => {
             const updatedPrice = document.getElementById(`price-${id}`).value;
             const updatedQty = document.getElementById(`qty-${id}`).value;
+            await updateDoc(doc(db, "customers", id), { price: parseFloat(updatedPrice), defaultQty: parseInt(updatedQty) || 1 });
+            alert("Updated!");
+        };
+
+        window.switchTypeProfile = async (id) => {
             const docRef = doc(db, "customers", id);
-            
-            try {
-                await updateDoc(docRef, {
-                    price: parseFloat(updatedPrice),
-                    defaultQty: parseInt(updatedQty) || 1
-                });
-                alert("Customer parameters updated successfully!");
-            } catch (error) {
-                console.error("Mutation Failure:", error);
-            }
-        }
+            const card = document.querySelector(`button[onclick="switchTypeProfile('${id}')"]`).closest('.customer-row');
+            const current = card.querySelector('.type-field').textContent.trim();
+            await updateDoc(docRef, { deliveryType: current === "Regular" ? "Inregular" : "Regular" });
+        };
 
-        // Quick Toggle Engine between Regular / Inregular frequency inside database grid
-        async function switchTypeProfile(id) {
-            const docRef = doc(db, "customers", id);
-            const targetCard = document.querySelector(`[data-id="${id}"]`).closest('.customer-row');
-            const currentBadgeText = targetCard.querySelector('.type-field').textContent.trim();
-            const alternateFrequency = currentBadgeText === "Regular" ? "Inregular" : "Regular";
-            
-            try {
-                await updateDoc(docRef, { deliveryType: alternateFrequency });
-            } catch (error) {
-                console.error("Frequency state modification error:", error);
-            }
-        }
+        window.purgeDocumentNode = async (id) => {
+            if(confirm("Delete this profile?")) await deleteDoc(doc(db, "customers", id));
+        };
 
-        // Destructive Document Eraser Engine
-        async function purgeDocumentNode(id) {
-            if(confirm("Confirm Destructive Action: Delete this profile permanently from database?")) {
-                try {
-                    await deleteDoc(doc(db, "customers", id));
-                } catch (error) {
-                    console.error("Purge failure event logged:", error);
-                }
-            }
-        }
-
-        // Client-Side Filtering Engine
         searchBar.onkeyup = function() {
-            const streamValue = searchBar.value.toLowerCase();
-            const rows = document.querySelectorAll('.customer-row');
-
-            rows.forEach(row => {
-                const nameNode = row.querySelector('.name-field').textContent.toLowerCase();
-                const phoneNode = row.querySelector('.phone-field').textContent.toLowerCase();
-                const stateNode = row.querySelector('.type-field').textContent.toLowerCase();
-                
-                if (nameNode.includes(streamValue) || phoneNode.includes(streamValue) || stateNode.includes(streamValue)) {
-                    row.style.display = "flex";
-                } else {
-                    row.style.display = "none";
-                }
+            const val = searchBar.value.toLowerCase();
+            document.querySelectorAll('.customer-row').forEach(row => {
+                row.style.display = (row.textContent.toLowerCase().includes(val)) ? "flex" : "none";
             });
         };
     </script>
