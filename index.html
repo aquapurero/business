@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaPure - Core Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
@@ -32,6 +32,7 @@
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md apple-blur rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
+        <!-- Logo -->
         <div class="text-center space-y-2">
             <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg mx-auto">
                 <i class="fa-solid fa-droplet text-white text-2xl"></i>
@@ -40,13 +41,16 @@
             <p class="text-sm text-neutral-400">Access your water supply operations engine</p>
         </div>
 
+        <!-- Dynamic Tabs -->
         <div class="flex bg-neutral-900/60 p-1 rounded-xl border border-neutral-800">
             <button id="tab-signin" onclick="switchAuthMode('signin')" class="w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all">Sign In</button>
             <button id="tab-signup" onclick="switchAuthMode('signup')" class="w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all">Sign Up</button>
         </div>
 
+        <!-- Form Architecture -->
         <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
             
+            <!-- Profile Picture Upload Area (Only visible on Sign Up) -->
             <div id="avatar-container" class="hidden flex flex-col items-center justify-center space-y-2 pb-2">
                 <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400">Profile Picture</label>
                 <div class="relative group cursor-pointer">
@@ -62,19 +66,11 @@
                 <p id="compress-status" class="text-[11px] text-emerald-400 hidden"><i class="fa-solid fa-circle-check"></i> Image Compressed Successfully</p>
             </div>
 
-            <div id="fullname-container" class="hidden">
-                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Display Name (Rider App Name)</label>
-                <div class="relative">
-                    <i class="fa-solid fa-id-card absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
-                    <input type="text" id="fullname" class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="e.g., Abinash Kumar">
-                </div>
-            </div>
-
             <div>
-                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number (Login ID)</label>
+                <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Username</label>
                 <div class="relative">
-                    <i class="fa-solid fa-phone absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
-                    <input type="tel" id="mobileNumber" pattern="[0-9]{10}" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="10-digit mobile number">
+                    <i class="fa-solid fa-user absolute left-4 top-3.5 text-neutral-500 text-sm"></i>
+                    <input type="text" id="username" required class="w-full bg-neutral-900/50 border border-neutral-800 rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Enter username">
                 </div>
             </div>
 
@@ -100,6 +96,7 @@
         </form>
     </div>
 
+    <!-- Firebase Integration Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -116,7 +113,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         let mode = 'signin';
-        let compressedAvatarBase64 = ""; 
+        let compressedAvatarBase64 = ""; // Will hold the compressed image string
 
         window.switchAuthMode = function(targetMode) {
             mode = targetMode;
@@ -124,38 +121,31 @@
             const btnSignup = document.getElementById('tab-signup');
             const roleContainer = document.getElementById('role-container');
             const avatarContainer = document.getElementById('avatar-container');
-            const fullnameContainer = document.getElementById('fullname-container');
             const submitBtn = document.getElementById('submit-btn');
-            const fullnameInput = document.getElementById('fullname');
-            const mobileInput = document.getElementById('mobileNumber');
 
+            // Reset image states when switching tabs
             compressedAvatarBase64 = "";
             document.getElementById('avatar-preview').classList.add('hidden');
             document.getElementById('avatar-placeholder').classList.remove('hidden');
             document.getElementById('compress-status').classList.add('hidden');
             document.getElementById('avatar-input').value = "";
-            fullnameInput.value = "";
-            mobileInput.value = "";
 
             if (mode === 'signup') {
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.remove('hidden');
                 avatarContainer.classList.remove('hidden');
-                fullnameContainer.classList.remove('hidden');
-                fullnameInput.required = true;
                 submitBtn.innerText = "Register System Account";
             } else {
                 btnSignin.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-white bg-neutral-800 shadow-sm transition-all";
                 btnSignup.className = "w-1/2 text-sm font-medium py-2 rounded-lg text-neutral-400 transition-all";
                 roleContainer.classList.add('hidden');
                 avatarContainer.classList.add('hidden');
-                fullnameContainer.classList.add('hidden');
-                fullnameInput.required = false;
                 submitBtn.innerText = "Authenticate Session";
             }
         }
 
+        // Auto Compression Algorithm (Resizes to max 300x300 and lowers JPEG quality)
         window.previewAndCompressAvatar = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -169,6 +159,7 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
+                    // Set square crop dimensions for standard user profiles
                     const maxSize = 300; 
                     let width = img.width;
                     let height = img.height;
@@ -189,8 +180,10 @@
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
 
+                    // Compress to JPEG with 0.7 quality (Best balance of quality and file size)
                     compressedAvatarBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
+                    // Update UI Previews
                     const preview = document.getElementById('avatar-preview');
                     const placeholder = document.getElementById('avatar-placeholder');
                     const status = document.getElementById('compress-status');
@@ -205,61 +198,41 @@
 
         window.handleAuth = async function(e) {
             e.preventDefault();
-            const mobileInput = document.getElementById('mobileNumber').value.trim();
+            const usernameInput = document.getElementById('username').value.trim().toLowerCase();
             const passwordInput = document.getElementById('password').value;
             const roleInput = document.getElementById('role').value;
-            const rawFullName = document.getElementById('fullname').value.trim();
 
-            if (!mobileInput || !passwordInput) return;
+            if (!usernameInput || !passwordInput) return;
 
-            // Database reference is now configured using Mobile Number as the Document ID key
-            const userDocRef = doc(db, "aquapure_users", mobileInput);
+            const userDocRef = doc(db, "aquapure_users", usernameInput);
 
             if (mode === 'signup') {
                 const snap = await getDoc(userDocRef);
                 if(snap.exists()){
-                    alert("This mobile number is already registered!");
+                    alert("This username is already taken!");
                     return;
                 }
                 
-                // Saving registration details
+                // Saving user details with compressed profile picture string inside Firebase
                 await setDoc(userDocRef, {
-                    mobile: mobileInput,
-                    displayName: rawFullName || ("User_" + mobileInput.substring(6)),
+                    username: usernameInput,
                     password: passwordInput, 
                     role: roleInput,
-                    avatar: compressedAvatarBase64 || null
+                    avatar: compressedAvatarBase64 || null // Saves base64 string directly inside document
                 });
-
-                if (roleInput === 'Staff') {
-                    const riderDocRef = doc(db, "riders", mobileInput);
-                    await setDoc(riderDocRef, {
-                        displayName: rawFullName,
-                        password: passwordInput,
-                        walletBalance: 0
-                    });
-                }
-
                 alert("Account successfully provisioned! Please sign in.");
                 switchAuthMode('signin');
             } else {
-                // Sign In Process using Mobile Number
+                // Sign In Process
                 const snap = await getDoc(userDocRef);
                 if(!snap.exists()) {
-                    alert("User terminal profile with this mobile number not found.");
+                    alert("User account terminal profile not found.");
                     return;
                 }
                 const userData = snap.data();
                 if(userData.password === passwordInput) {
-                    localStorage.setItem('active_user', userData.mobile);
-                    
-                    // Storing the exact Display Name typed by the user to use in staff.html
-                    if (userData.displayName) {
-                        localStorage.setItem('active_user_name', userData.displayName);
-                    } else {
-                        localStorage.setItem('active_user_name', userData.mobile);
-                    }
-
+                    localStorage.setItem('active_user', userData.username);
+                    // Optional: Store profile image in localStorage to use inside admin.html or staff.html
                     if (userData.avatar) {
                         localStorage.setItem('active_user_avatar', userData.avatar);
                     } else {
