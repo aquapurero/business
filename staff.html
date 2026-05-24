@@ -426,9 +426,7 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
                 emptyJarsReceived: emptyReceived // Ye field database mein save hogi
             });
             
-            // --- YAHAN SE REPLACE KAREIN (Script Tag ke andar) ---
-
-// 1. Start Delivery Function (Jo pehle missing tha)
+            // 1. Start Delivery Function
 window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
     if(confirm(`Start delivery for ${custName}?`)) {
         try {
@@ -466,7 +464,7 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const deliveredQty = parseInt(qtyInput.value) || 0;
     const emptyReceived = parseInt(emptyInput.value) || 0;
 
-    if(confirm(`Confirm: ${deliveredQty} Deliver, ${emptyReceived} Empty Jars?`)) {
+    if(confirm(`Confirm: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
         try {
             await updateDoc(doc(db, "aquapure_orders", docId), {
                 status: 'progressing well',
@@ -501,7 +499,6 @@ window.processLogout = function() {
     }
 };
 
-// --- YAHAN TAK REPLACE KAREIN ---
 
     </script>
 </body>
