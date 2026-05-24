@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure | Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #050505; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glow-text { text-shadow: 0 0 15px rgba(244, 63, 94, 0.3); }
+        .preset-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-md mx-auto space-y-8">
+        <header class="text-center pt-4">
+            <h1 class="text-2xl font-bold tracking-tight">AquaPure</h1>
+            <p class="text-neutral-500 text-xs uppercase tracking-[0.2em]">Expense Tracker</p>
+        </header>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-[10px] text-neutral-400 uppercase tracking-widest mb-1">Daily</p>
+                <p id="daily-exp" class="text-2xl font-bold glow-text">₹0</p>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-[10px] text-neutral-400 uppercase tracking-widest mb-1">Monthly</p>
+                <p id="monthly-exp" class="text-2xl font-bold glow-text">₹0</p>
+            </div>
+        </div>
+
+        <form id="expForm" class="glass p-6 rounded-3xl space-y-4">
+            <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="document.getElementById('amt').value='50'" class="glass p-2 rounded-xl text-xs hover:bg-rose-500/20 transition preset-btn">₹50</button>
+                <button type="button" onclick="document.getElementById('amt').value='100'" class="glass p-2 rounded-xl text-xs hover:bg-rose-500/20 transition preset-btn">₹100</button>
+                <button type="button" onclick="document.getElementById('amt').value='200'" class="glass p-2 rounded-xl text-xs hover:bg-rose-500/20 transition preset-btn">₹200</button>
+                <button type="button" onclick="document.getElementById('amt').value='500'" class="glass p-2 rounded-xl text-xs hover:bg-rose-500/20 transition preset-btn">₹500</button>
+            </div>
+
+            <input type="number" id="amt" placeholder="Amount (₹)" class="w-full bg-transparent border-b border-neutral-800 p-2 focus:outline-none focus:border-rose-500 transition-colors" required>
+            
+            <select id="cat" onchange="document.getElementById('customCat').style.display = this.value === 'Other' ? 'block' : 'none'" class="w-full bg-transparent border-b border-neutral-800 p-2 focus:outline-none">
+                <option value="Food">Food</option>
+                <option value="Fuel">Fuel</option>
+                <option value="Other">Other</option>
+            </select>
+            
+            <input type="text" id="customCat" placeholder="Specify category" style="display:none" class="w-full bg-transparent border-b border-neutral-800 p-2 focus:outline-none">
+            
+            <button class="w-full bg-white text-black font-bold py-3 rounded-2xl hover:bg-neutral-200 active:scale-95 transition-all">Record Expense</button>
+        </form>
+
+        <div id="list" class="space-y-3 pt-2"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const db = getFirestore(initializeApp({
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        }));
+
+        window.deleteEntry = async (id) => { if(confirm('Remove this expense?')) await deleteDoc(doc(db, "expenses", id)); };
+
+        document.getElementById('expForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cat = document.getElementById('cat').value === 'Other' ? document.getElementById('customCat').value : document.getElementById('cat').value;
+            await addDoc(collection(db, "expenses"), { amount: parseFloat(document.getElementById('amt').value), category: cat, timestamp: serverTimestamp() });
+            e.target.reset(); document.getElementById('customCat').style.display = 'none';
+        });
+
+        onSnapshot(query(collection(db, "expenses"), orderBy("timestamp", "desc")), (snap) => {
+            let daily = 0, monthly = 0;
+            const now = new Date(), todayStr = now.toISOString().split('T')[0], monthStr = now.toISOString().substring(0, 7);
+            const list = document.getElementById('list'); list.innerHTML = '';
+            snap.forEach(doc => {
+                const d = doc.data();
+                if (!d.timestamp) return;
+                const date = d.timestamp.toDate().toISOString().split('T')[0], month = d.timestamp.toDate().toISOString().substring(0, 7);
+                if (date === todayStr) daily += d.amount;
+                if (month === monthStr) monthly += d.amount;
+                list.innerHTML += `<div onclick="deleteEntry('${doc.id}')" class="glass p-4 flex justify-between items-center rounded-2xl cursor-pointer hover:bg-white/5 transition">
+                    <div>
+                        <p class="font-medium text-sm">${d.category}</p>
+                        <p class="text-[10px] text-neutral-500">${d.timestamp.toDate().toLocaleDateString()}</p>
+                    </div>
+                    <span class="text-rose-400 font-bold">- ₹${d.amount}</span>
+                </div>`;
+            });
+            document.getElementById('daily-exp').innerText = `₹${daily}`;
+            document.getElementById('monthly-exp').innerText = `₹${monthly}`;
+        });
+    </script>
+</body>
+</html>
