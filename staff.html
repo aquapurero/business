@@ -480,17 +480,7 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
 
 
 
-            // Commission update
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, {
-                walletBalance: increment(deliveredQty * commRate)
-            });
-        } catch (err) {
-            console.error(err);
-            alert("Database error: Could not update.");
-        }
-    }
-};
+            
 
 
         function updateMetricsUI(earnings, totalJars) {
