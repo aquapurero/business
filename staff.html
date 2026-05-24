@@ -230,97 +230,75 @@
 
         // Complete Live Stream Order Real-time Watch Pipeline
         function triggerPipelineStream() {
-            onSnapshot(ordersRef, (snapshot) => {
-                const streamStack = document.getElementById('pipeline-stream-stack');
-                if(!streamStack) return;
-                streamStack.innerHTML = '';
+    onSnapshot(ordersRef, (snapshot) => {
+        const streamStack = document.getElementById('pipeline-stream-stack');
+        if(!streamStack) return;
+        streamStack.innerHTML = '';
 
-                let allocatedJobsCount = 0;
-                let combinedEarningsCalculated = 0;
-                let sumTotalJarsDelivered = 0;
+        snapshot.forEach((orderDoc) => {
+            const data = orderDoc.data();
+            const docId = orderDoc.id;
+            let matchFound = (data.riderMobile == riderMobileId || data.assignedRider == riderMobileId);
+            if (!matchFound) return; 
 
-                snapshot.forEach((orderDoc) => {
-                    const data = orderDoc.data();
-                    const docId = orderDoc.id;
+            const productVolume = parseInt(data.quantity) || 0;
+            const emptyCount = data.emptyJarsReceived || 0;
+            const custKey = (data.customerName || '').trim().toLowerCase();
+            const custConfig = globalCustomersMap.get(custKey) || { jarPrice: 30, commRate: 3 };
+            
+            let visualNodeIcon = '', pipelineActionBlock = '', volumeDisplayBlock = '', stateBadgeHeader = '';
 
-                    let matchFound = false;
-                    if (data.riderMobile && String(data.riderMobile).trim() === riderMobileId) matchFound = true;
-                    else if (data.assignedRider && String(data.assignedRider).trim() === riderMobileId) matchFound = true;
-                    else if (data.rider && String(data.rider).startsWith(riderMobileId)) matchFound = true;
-
-                    if (!matchFound) return; 
-
-                    allocatedJobsCount++;
-                    const productVolume = parseInt(data.quantity) || 0;
-
-                    const custKey = data.customerName ? data.customerName.trim().toLowerCase() : '';
-                    const custConfig = globalCustomersMap.get(custKey) || { jarPrice: DEFAULT_JAR_PRICE, commRate: DEFAULT_COMM_RATE };
-                    
-                    const dynamicJarPrice = custConfig.jarPrice;
-                    const dynamicCommRate = custConfig.commRate;
-                    
-                    const calculatedTotalBill = productVolume * dynamicJarPrice;
-                    const currentOrderCommission = productVolume * dynamicCommRate;
-
-                    if (data.status === 'progressing well') {
-                        sumTotalJarsDelivered += productVolume;
-                        combinedEarningsCalculated += currentOrderCommission;
-                    }
-
-                    let visualNodeIcon = '';
-                    let pipelineActionBlock = '';
-                    let volumeDisplayBlock = '';
-                    let stateBadgeHeader = '';
-
-                    // Order State Conditional Flow Evaluator 
-                    if(data.status === 'Pending') {
-                        visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 z-10 relative"><i class="fa-solid fa-clock text-base"></i></div>`;
-                        stateBadgeHeader = `<span class="text-[10px] font-mono font-medium text-amber-400 uppercase tracking-wider bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-md">Pending Allocation</span>`;
-                        volumeDisplayBlock = `
-                            <div class="text-right">
-                                <span class="text-xs font-mono font-semibold text-neutral-400 block">${productVolume} Jars Ordered</span>
+            if(data.status === 'Pending') {
+                stateBadgeHeader = `<span class="text-amber-400">Pending</span>`;
+                pipelineActionBlock = `<button onclick="window.handleStartDelivery('${docId}', '${data.customerName}', '${data.mobileNumber}', '${data.orderId}')" class="w-full bg-neutral-900 py-3 rounded-xl">Accept Delivery</button>`;
+            } 
+            else if(data.status === 'Out for Delivery') {
+                stateBadgeHeader = `<span class="text-cyan-400">On the Way</span>`;
+                volumeDisplayBlock = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-neutral-400">Delivered Qty:</span>
+                            <div class="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg p-0.5">
+                                <button onclick="window.adjustJarCounter('${docId}', -1, ${custConfig.jarPrice}, 'qty')" class="h-7 w-7 bg-neutral-900 rounded-md">-</button>
+                                <input type="number" id="manual-qty-${docId}" value="${productVolume || 1}" class="w-10 bg-transparent text-center font-bold text-white">
+                                <button onclick="window.adjustJarCounter('${docId}', 1, ${custConfig.jarPrice}, 'qty')" class="h-7 w-7 bg-neutral-900 rounded-md">+</button>
                             </div>
-                        `;
-                        pipelineActionBlock = `
-                            <button onclick="window.handleStartDelivery('${docId}', '${data.customerName || 'Customer'}', '${data.mobileNumber || ''}', '${data.orderId || 'N/A'}')" class="w-full bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 font-semibold py-3 rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center space-x-2">
-                                <i class="fa-solid fa-truck-fast text-cyan-400"></i>
-                                <span>Accept & Start Delivery</span>
-                            </button>
-                        `;
-                    } else if(data.status === 'Out for Delivery') {
-                        visualNodeIcon = `<div class="h-12 w-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 z-10 relative animate-pulse"><i class="fa-solid fa-truck-fast text-base"></i></div>`;
-                        stateBadgeHeader = `<span class="text-[10px] font-mono font-medium text-cyan-400 uppercase tracking-wider bg-cyan-500/5 border border-cyan-500/10 px-2 py-0.5 rounded-md">On the Way</span>`;
-                        
-                        // Premium Dynamic +/- Interactive Counter Component Block with Real-Time Total Bill
-                        // Out for Delivery section ke andar ye update karein
-// Out for Delivery section ke andar
-// Out for Delivery section ke andar:
-volumeDisplayBlock = `
-    <div class="space-y-4">
-        <div class="flex justify-between items-center">
-            <span class="text-xs text-neutral-400">Delivered Qty:</span>
-            <div class="flex items-center bg-neutral-950 border border-neutral-800 rounded-lg p-0.5">
-                <button onclick="window.adjustJarCounter('${docId}', -1, ${dynamicJarPrice}, 'qty')" class="h-7 w-7 bg-neutral-900 rounded-md">-</button>
-                <input type="number" id="manual-qty-${docId}" value="${productVolume || 1}" class="w-10 bg-transparent text-center font-bold text-white">
-                <button onclick="window.adjustJarCounter('${docId}', 1, ${dynamicJarPrice}, 'qty')" class="h-7 w-7 bg-neutral-900 rounded-md">+</button>
-            </div>
-        </div>
+                        </div>
+                        <div class="space-y-2">
+                            <span class="text-[10px] text-neutral-500 uppercase">Empty Jars Received:</span>
+                            <div class="flex gap-2" id="empty-selector-${docId}">
+                                ${[0, 1, 2, 3].map(num => `<button onclick="window.setEmptyVal('${docId}', ${num})" class="flex-1 py-1.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs font-bold hover:bg-emerald-600">${num}</button>`).join('')}
+                            </div>
+                            <input type="number" id="manual-empty-${docId}" value="0" placeholder="Manual Count" class="w-full bg-neutral-900 border border-neutral-700 rounded-lg py-2 px-3 text-white text-xs text-center">
+                        </div>
+                    </div>`;
+                pipelineActionBlock = `<button onclick="window.submitFinalDelivery('${docId}', ${custConfig.jarPrice}, ${custConfig.commRate})" class="w-full bg-emerald-600 py-3 rounded-xl font-bold">Complete Delivery</button>`;
+            } 
+            else if(data.status === 'progressing well') {
+                stateBadgeHeader = `<span class="text-emerald-400">Delivered</span>`;
+                volumeDisplayBlock = `
+                    <div class="text-right">
+                        <div class="text-sm font-bold">${productVolume} Jars</div>
+                        <div class="mt-2 bg-neutral-900 px-2 py-1 rounded-lg border border-neutral-800">
+                            <span class="text-[9px] text-neutral-400">EMPTY RECV:</span>
+                            <span class="text-xs font-bold text-blue-400">${emptyCount}</span>
+                        </div>
+                    </div>`;
+            }
 
-        <div class="space-y-2">
-            <span class="text-[10px] text-neutral-500 uppercase tracking-widest">Empty Jars Received:</span>
-            <div class="flex gap-2" id="empty-selector-${docId}">
-                ${[0, 1, 2, 3].map(num => `
-                    <button onclick="window.setEmptyVal('${docId}', ${num})" 
-                            class="flex-1 py-1.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs font-bold hover:bg-emerald-600 transition-all">
-                        ${num}
-                    </button>
-                `).join('')}
-            </div>
-            <input type="number" id="manual-empty-${docId}" value="0" placeholder="Enter amount..." 
-                   class="w-full bg-neutral-900 border border-neutral-700 rounded-lg py-2 px-3 text-white text-xs font-bold text-center">
-        </div>
-    </div>
-`;
+            streamStack.innerHTML += `
+                <div class="apple-blur rounded-2xl p-4 mb-4">
+                    <div class="flex justify-between mb-4">
+                        <h4 class="font-bold">${data.customerName || 'Customer'}</h4>
+                        ${stateBadgeHeader}
+                    </div>
+                    ${volumeDisplayBlock}
+                    <div class="mt-4">${pipelineActionBlock}</div>
+                </div>`;
+        });
+    });
+}
+
 
 
 
@@ -409,60 +387,43 @@ window.adjustJarCounter = function(id, delta, price, type) {
 };
 
 // Submission Logic (Empty jars ko database mein bhejega)
-window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
-    const qtyInput = document.getElementById(`manual-qty-${docId}`);
-    const emptyInput = document.getElementById(`manual-empty-${docId}`);
-    
-    const deliveredQty = parseInt(qtyInput.value) || 0;
-    const emptyReceived = parseInt(emptyInput.value) || 0;
-
-    if(confirm(`Confirm Delivery: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
-        try {
-            const orderDocRef = doc(db, "aquapure_orders", docId);
-            
-            await updateDoc(orderDocRef, {
-                status: 'progressing well',
-                quantity: deliveredQty,
-                emptyJarsReceived: emptyReceived // Ye field database mein save hogi
-            });
-            
-            // ... baaki ka code ...
-
-// Naya function yahan add karein
 window.setEmptyVal = function(id, val) {
     document.getElementById(`manual-empty-${id}`).value = val;
-    // UI Feedback: Button ko highlight karne ke liye
     const container = document.getElementById(`empty-selector-${id}`);
     if (container) {
-        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
-        event.target.classList.add('bg-emerald-600', 'text-white');
+        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600'));
+        event.target.classList.add('bg-emerald-600');
     }
 };
 
-// Pehle se maujood function
 window.adjustJarCounter = function(id, delta, price, type) {
-    // ... aapka existing code ...
+    const input = document.getElementById(`manual-${type}-${id}`);
+    if(input) {
+        let val = parseInt(input.value) || 0;
+        val += delta;
+        if(val < 0) val = 0;
+        input.value = val;
+    }
 };
 
-// Pehle se maujood function
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
-    // ... aapka existing code ...
-};
+    const deliveredQty = parseInt(document.getElementById(`manual-qty-${docId}`).value) || 0;
+    const emptyReceived = parseInt(document.getElementById(`manual-empty-${docId}`).value) || 0;
 
-// ... baaki ka code ...
-
-
-            // Commission update
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, {
+    if(confirm(`Confirm: ${deliveredQty} Deliver, ${emptyReceived} Empty Jars Recv?`)) {
+        try {
+            await updateDoc(doc(db, "aquapure_orders", docId), {
+                status: 'progressing well',
+                quantity: deliveredQty,
+                emptyJarsReceived: emptyReceived 
+            });
+            await updateDoc(doc(db, "riders", riderMobileId), {
                 walletBalance: increment(deliveredQty * commRate)
             });
-        } catch (err) {
-            console.error(err);
-            alert("Database error: Could not update.");
-        }
+        } catch (err) { alert("Error saving data"); }
     }
 };
+
 
 
         function updateMetricsUI(earnings, totalJars) {
