@@ -295,6 +295,17 @@
             onSnapshot(ordersRef, (snapshot) => {
                 const streamStack = document.getElementById('pipeline-stream-stack');
                 if(!streamStack) return;
+                      // --- YEH PART NAYA ADD KAREIN (PUNCH IN CHECK) ---
+        if (!isPunchedInToday) {
+            streamStack.innerHTML = `
+                <div class="apple-blur rounded-2xl p-8 text-center text-neutral-500 text-sm border border-neutral-800">
+                    <i class="fa-solid fa-lock text-rose-400 text-2xl mb-3 block"></i>
+                    <p>Orders locked.</p>
+                    <p class="text-xs mt-1">Please <strong>Punch In</strong> to see your delivery pipeline.</p>
+                </div>`;
+            return;
+        }
+        // --- NAYA PART END ---
                 streamStack.innerHTML = '';
 
                 let allocatedJobsCount = 0;
