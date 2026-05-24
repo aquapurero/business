@@ -145,14 +145,15 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
-                                <th class="px-6 py-4 font-medium">Order ID</th>
-                                <th class="px-6 py-4 font-medium">Customer Details</th>
-                                <th class="px-6 py-4 font-medium">Quantity / Price</th>
-                                <th class="px-6 py-4 font-medium">Assigned Rider</th>
-                                <th class="px-6 py-4 font-medium">Live Status</th>
-                                <th class="px-6 py-4 font-medium text-center">Action</th>
-                            </tr>
+                           <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
+    <th class="px-6 py-4 font-medium">Order ID</th>
+    <th class="px-6 py-4 font-medium">Customer Details</th>
+    <th class="px-6 py-4 font-medium">Quantity / Price</th>
+    <th class="px-6 py-4 font-medium">Empty Returns</th> <th class="px-6 py-4 font-medium">Assigned Rider</th>
+    <th class="px-6 py-4 font-medium">Live Status</th>
+    <th class="px-6 py-4 font-medium text-center">Action</th>
+</tr>
+
                         </thead>
                         <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
                             <tr>
@@ -531,29 +532,39 @@
                 const pricingBreakdownDisplay = jars > 0 ? `₹${currentCustJarPrice} × ${jars}` : `Rate: ₹${currentCustJarPrice}/Jar`;
                 const totalBillDisplay = jars > 0 ? `Total: ₹${totalCharge}` : `Pending Total`;
 
-                const row = `
-                    <tr class="hover:bg-neutral-900/30 transition-colors">
-                        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-phone text-neutral-500 mr-1"></i>${data.mobileNumber || 'No Phone'}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5"><i class="fa-solid fa-location-dot text-neutral-500 mr-1"></i>${data.address || 'No Address'}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-neutral-200">${quantityDisplay}</div>
-                            <div class="text-xs text-neutral-500 font-mono mt-0.5">${pricingBreakdownDisplay}</div>
-                            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">${totalBillDisplay}</div>
-                        </td>
-                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
-                        <td class="px-6 py-4">${statusBadge}</td>
-                        <td class="px-6 py-4 text-center">
-                            <button onclick="window.deleteOrderRecord('${docId}')" class="text-neutral-500 hover:text-rose-400 p-1.5 transition-colors">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
+                // loop ke andar data extract karein
+const emptyReturned = data.emptyJarsReceived || 0; 
+
+// row variable mein update
+const row = `
+    <tr class="hover:bg-neutral-900/30 transition-colors">
+        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
+        <td class="px-6 py-4">
+            <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
+            <div class="text-xs text-neutral-400 mt-0.5">${data.mobileNumber || 'No Phone'}</div>
+        </td>
+        <td class="px-6 py-4">
+            <div class="font-medium text-neutral-200">${quantityDisplay}</div>
+            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">${totalBillDisplay}</div>
+        </td>
+        <td class="px-6 py-4">
+            <div class="flex items-center space-x-2">
+                <span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md text-xs font-bold font-mono border border-blue-500/20">
+                    ${emptyReturned} Jars
+                </span>
+            </div>
+        </td>
+        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
+        <td class="px-6 py-4">${statusBadge}</td>
+        <td class="px-6 py-4 text-center">
+            <button onclick="window.deleteOrderRecord('${docId}')" class="text-neutral-500 hover:text-rose-400 p-1.5 transition-colors">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </td>
+    </tr>
+`;
+tbody.innerHTML += row;
+
             });
 
             document.getElementById('stat-total').innerText = total;
