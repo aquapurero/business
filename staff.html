@@ -102,7 +102,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, increment, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -199,23 +200,37 @@
         });
 
         window.triggerPunchIn = async function() {
-            try {
-                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                await setDoc(attDocRef, {
-                    mobile: riderMobileId,
-                    rider: riderDisplayName,
-                    date: todayStr,
-                    punchIn: timeStr,
-                    punchOut: null
-                }, { merge: true });
+    try {
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // 1. Attendance Record Save
+        await setDoc(attDocRef, {
+            mobile: riderMobileId,
+            rider: riderDisplayName,
+            date: todayStr,
+            punchIn: timeStr,
+            punchOut: null
+        }, { merge: true });
 
-                const walletProfileRef = doc(db, "riders", riderMobileId);
-                await updateDoc(walletProfileRef, { walletBalance: increment(250) });
-                alert("Punch In Successful! ₹250 Daily Allowance Added.");
-            } catch (err) {
-                console.error(err);
-            }
-        };
+        // 2. Rider Wallet Update
+        const walletProfileRef = doc(db, "riders", riderMobileId);
+        await updateDoc(walletProfileRef, { walletBalance: increment(250) });
+
+        // 3. Automatic Expense Log
+        // Note: ensure 'addDoc', 'collection', 'serverTimestamp' imports are present
+        await addDoc(collection(db, "expenses"), {
+            amount: 250,
+            category: "Punch-in Allowance (" + riderDisplayName + ")",
+            timestamp: serverTimestamp()
+        });
+
+        alert("Punch In Successful! ₹250 added to Wallet and logged as Expense.");
+    } catch (err) {
+        console.error("Critical error in Punch In:", err);
+        alert("Punch In failed: " + err.message);
+    }
+};
+
 
         window.triggerPunchOut = async function() {
             if(confirm("Confirm action: Close your daily shift now?")) {
