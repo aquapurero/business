@@ -449,31 +449,39 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     
     const deliveredQty = parseInt(qtyInput.value) || 0;
     const emptyReceived = parseInt(emptyInput.value) || 0;
+    const totalAmount = deliveredQty * itemPrice;
 
-    if(confirm(`Confirm Delivery: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
-        try {
-            const orderDocRef = doc(db, "aquapure_orders", docId);
-            
-            // Firebase update
-            await updateDoc(orderDocRef, {
-                status: 'progressing well',
-                quantity: deliveredQty,
-                emptyJarsReceived: emptyReceived
-            });
-            
-            // Commission update
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, {
-                walletBalance: increment(deliveredQty * commRate)
-            });
-            
-            alert("Delivery Completed!");
-        } catch (err) {
-            console.error(err);
-            alert("Database error: Could not update.");
-        }
+    // Custom choice: Payment abhi mila ya baad mein?
+    const paymentChoice = confirm(`Confirm Delivery: ${deliveredQty} Jars.\n\nClick "OK" if customer PAID now.\nClick "Cancel" if payment is PENDING (Credit).`);
+    
+    try {
+        const orderDocRef = doc(db, "aquapure_orders", docId);
+        
+        // Data structure update
+        const updateData = {
+            status: 'progressing well',
+            quantity: deliveredQty,
+            emptyJarsReceived: emptyReceived,
+            paymentStatus: paymentChoice ? 'Paid' : 'Pending',
+            pendingAmount: paymentChoice ? 0 : totalAmount,
+            completedAt: new Date().toISOString()
+        };
+
+        await updateDoc(orderDocRef, updateData);
+        
+        // Commission humesha update hogi kyunki delivery ho gayi hai
+        const walletProfileRef = doc(db, "riders", riderMobileId);
+        await updateDoc(walletProfileRef, {
+            walletBalance: increment(deliveredQty * commRate)
+        });
+        
+        alert(paymentChoice ? "Delivery & Payment Recorded!" : "Delivery Completed (Payment marked as Pending/Credit).");
+    } catch (err) {
+        console.error(err);
+        alert("Database error: Could not update.");
     }
 };
+
 // --- Yahan tak paste karein ---
 
 
