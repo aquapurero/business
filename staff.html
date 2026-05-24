@@ -200,24 +200,30 @@
         });
 
         window.triggerPunchIn = async function() {
+    // 1. Check karo ki kya aaj pehle se Punch In ho chuka hai?
+    if (isPunchedInToday) {
+        alert("Aap pehle hi Punch In kar chuke hain!");
+        return;
+    }
+
     try {
         const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        // 1. Attendance Record Save
+        // 2. Attendance Record
         await setDoc(attDocRef, {
             mobile: riderMobileId,
             rider: riderDisplayName,
             date: todayStr,
             punchIn: timeStr,
-            punchOut: null
+            punchOut: null,
+            allowanceGiven: true // Ye flag add kar rahe hain taaki dobara paise na milein
         }, { merge: true });
 
-        // 2. Rider Wallet Update
+        // 3. Rider Wallet Update
         const walletProfileRef = doc(db, "riders", riderMobileId);
         await updateDoc(walletProfileRef, { walletBalance: increment(250) });
 
-        // 3. Automatic Expense Log
-        // Note: ensure 'addDoc', 'collection', 'serverTimestamp' imports are present
+        // 4. Automatic Expense Log
         await addDoc(collection(db, "expenses"), {
             amount: 250,
             category: "Punch-in Allowance (" + riderDisplayName + ")",
@@ -230,6 +236,7 @@
         alert("Punch In failed: " + err.message);
     }
 };
+
 
 
         window.triggerPunchOut = async function() {
