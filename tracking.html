@@ -12,8 +12,36 @@
     <div class="max-w-md mx-auto">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl font-bold">Pending Payments</h1>
-          <a href="admin.html" class="text-xs text-neutral-400 bg-neutral-900 px-3 py-1 rounded-lg">Back to Admin</a>
+            <a href="admin.html" class="text-xs text-neutral-400 bg-neutral-900 px-3 py-1 rounded-lg">Back to Admin</a>
+        </div>
 
+        <div class="mb-6">
+            <div class="flex justify-between text-xs mb-1">
+                <span class="text-neutral-400">Total Volume Capacity</span>
+                <span id="volume-text" class="text-white font-bold text-xs">0 / 168 Jars</span>
+            </div>
+            <div class="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
+                <div id="volume-bar" class="bg-blue-600 h-full w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Daily Income</p>
+                <p class="text-sm font-bold text-emerald-400" id="stat-daily-income">₹0</p>
+            </div>
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Monthly Income</p>
+                <p class="text-sm font-bold text-emerald-400" id="stat-monthly-income">₹0</p>
+            </div>
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Daily Delivered</p>
+                <p class="text-sm font-bold text-blue-400" id="stat-daily-delivered">0</p>
+            </div>
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Daily Empty Rec.</p>
+                <p class="text-sm font-bold text-purple-400" id="stat-daily-received">0</p>
+            </div>
         </div>
         
         <div id="pending-list" class="space-y-4">
@@ -38,17 +66,34 @@
         const db = getFirestore(app);
 
         const listContainer = document.getElementById('pending-list');
-
-        // Sabhi orders fetch kar rahe hain jo deliver ho chuke hain (progressing well)
         const q = query(collection(db, "aquapure_orders"), where("status", "==", "progressing well"));
 
         onSnapshot(q, (snapshot) => {
             listContainer.innerHTML = '';
             let found = false;
 
+            let dailyInc = 0, monthlyInc = 0, dailyDel = 0, dailyRec = 0;
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const monthStr = now.toISOString().substring(0, 7); // YYYY-MM
+
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                // Sirf wahi dikhao jahan pendingAmount > 0 hai
+                const orderDate = data.completedAt ? data.completedAt.split('T')[0] : "";
+                const orderMonth = data.completedAt ? data.completedAt.substring(0, 7) : "";
+                
+                const paid = parseFloat(data.paidAmount) || 0;
+                const del = parseInt(data.quantity) || 0;
+                const rec = parseInt(data.emptyJarsReceived) || 0;
+
+                // Analytics Logic
+                if (orderMonth === monthStr) monthlyInc += paid;
+                if (orderDate === todayStr) {
+                    dailyInc += paid;
+                    dailyDel += del;
+                    dailyRec += rec;
+                }
+
                 if (data.pendingAmount > 0) {
                     found = true;
                     const card = document.createElement('div');
@@ -74,6 +119,16 @@
                 }
             });
 
+            // Update UI
+            document.getElementById('stat-daily-income').innerText = `₹${dailyInc}`;
+            document.getElementById('stat-monthly-income').innerText = `₹${monthlyInc}`;
+            document.getElementById('stat-daily-delivered').innerText = dailyDel;
+            document.getElementById('stat-daily-received').innerText = dailyRec;
+            
+            const percent = Math.min((dailyDel / 168) * 100, 100);
+            document.getElementById('volume-bar').style.width = percent + "%";
+            document.getElementById('volume-text').innerText = `${dailyDel} / 168 Jars`;
+
             if (!found) {
                 listContainer.innerHTML = '<div class="text-center text-neutral-500 py-10">No pending payments! 🎉</div>';
             }
@@ -84,7 +139,7 @@
                 try {
                     await updateDoc(doc(db, "aquapure_orders", id), {
                         paymentStatus: 'Paid',
-                        paidAmount: amount, // Poora amount paid mark kar rahe hain
+                        paidAmount: amount,
                         pendingAmount: 0
                     });
                     alert("Payment updated successfully!");
