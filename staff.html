@@ -408,6 +408,22 @@ window.adjustJarCounter = function(id, delta, price, type) {
     }
 };
 
+// Add this block before window.submitFinalDelivery
+window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
+    if(confirm(`Start delivery for ${custName}?`)) {
+        try {
+            await updateDoc(doc(db, "aquapure_orders", docId), { 
+                status: 'Out for Delivery' 
+            });
+            console.log("Status updated to Out for Delivery");
+        } catch (err) { 
+            console.error(err);
+            alert("Failed to start delivery."); 
+        }
+    }
+};
+
+
 // Submission Logic (Empty jars ko database mein bhejega)
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const qtyInput = document.getElementById(`manual-qty-${docId}`);
