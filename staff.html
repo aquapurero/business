@@ -294,6 +294,7 @@
                         // Premium Dynamic +/- Interactive Counter Component Block with Real-Time Total Bill
                         // Out for Delivery section ke andar ye update karein
 // Out for Delivery section ke andar
+// Out for Delivery section ke andar:
 volumeDisplayBlock = `
     <div class="space-y-4">
         <div class="flex justify-between items-center">
@@ -305,7 +306,7 @@ volumeDisplayBlock = `
             </div>
         </div>
 
-        <div class="space-y-1">
+        <div class="space-y-2">
             <span class="text-[10px] text-neutral-500 uppercase tracking-widest">Empty Jars Received:</span>
             <div class="flex gap-2" id="empty-selector-${docId}">
                 ${[0, 1, 2, 3].map(num => `
@@ -315,10 +316,12 @@ volumeDisplayBlock = `
                     </button>
                 `).join('')}
             </div>
-            <input type="hidden" id="manual-empty-${docId}" value="0">
+            <input type="number" id="manual-empty-${docId}" value="0" placeholder="Enter amount..." 
+                   class="w-full bg-neutral-900 border border-neutral-700 rounded-lg py-2 px-3 text-white text-xs font-bold text-center">
         </div>
     </div>
 `;
+
 
 
 
