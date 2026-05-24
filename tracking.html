@@ -35,6 +35,14 @@
                 <p class="text-sm font-bold text-emerald-400" id="stat-monthly-income">₹0</p>
             </div>
             <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Daily Expense</p>
+                <p class="text-sm font-bold text-rose-400" id="stat-daily-expense">₹0</p>
+            </div>
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
+                <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Monthly Expense</p>
+                <p class="text-sm font-bold text-rose-400" id="stat-monthly-expense">₹0</p>
+            </div>
+            <div class="bg-neutral-900 p-3 rounded-xl border border-neutral-800">
                 <p class="text-[9px] text-neutral-500 uppercase tracking-widest">Daily Delivered</p>
                 <p class="text-sm font-bold text-blue-400" id="stat-daily-delivered">0</p>
             </div>
@@ -53,99 +61,77 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const db = getFirestore(initializeApp({
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
             authDomain: "aquapure-1a3ce.firebaseapp.com",
             projectId: "aquapure-1a3ce",
             storageBucket: "aquapure-1a3ce.firebasestorage.app",
             messagingSenderId: "8661923251",
             appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
-        };
+        }));
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // 1. Order Listener (Income & Delivery)
+        onSnapshot(query(collection(db, "aquapure_orders"), where("status", "==", "progressing well")), (snap) => {
+            const list = document.getElementById('pending-list');
+            list.innerHTML = '';
+            let dInc = 0, mInc = 0, dDel = 0, dRec = 0;
+            const today = new Date().toISOString().split('T')[0];
+            const month = new Date().toISOString().substring(0, 7);
 
-        const listContainer = document.getElementById('pending-list');
-        const q = query(collection(db, "aquapure_orders"), where("status", "==", "progressing well"));
-
-        onSnapshot(q, (snapshot) => {
-            listContainer.innerHTML = '';
-            let found = false;
-
-            let dailyInc = 0, monthlyInc = 0, dailyDel = 0, dailyRec = 0;
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const monthStr = now.toISOString().substring(0, 7); // YYYY-MM
-
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const orderDate = data.completedAt ? data.completedAt.split('T')[0] : "";
-                const orderMonth = data.completedAt ? data.completedAt.substring(0, 7) : "";
-                
-                const paid = parseFloat(data.paidAmount) || 0;
-                const del = parseInt(data.quantity) || 0;
-                const rec = parseInt(data.emptyJarsReceived) || 0;
-
-                // Analytics Logic
-                if (orderMonth === monthStr) monthlyInc += paid;
-                if (orderDate === todayStr) {
-                    dailyInc += paid;
-                    dailyDel += del;
-                    dailyRec += rec;
+            snap.forEach(docSnap => {
+                const d = docSnap.data();
+                if (d.completedAt?.startsWith(month)) mInc += (parseFloat(d.paidAmount) || 0);
+                if (d.completedAt?.startsWith(today)) {
+                    dInc += (parseFloat(d.paidAmount) || 0);
+                    dDel += parseInt(d.quantity) || 0;
+                    dRec += parseInt(d.emptyJarsReceived) || 0;
                 }
-
-                if (data.pendingAmount > 0) {
-                    found = true;
-                    const card = document.createElement('div');
-                    card.className = "bg-neutral-900 border border-neutral-800 p-4 rounded-2xl";
-                    card.innerHTML = `
+                if (d.pendingAmount > 0) {
+                    list.innerHTML += `<div class="bg-neutral-900 border border-neutral-800 p-4 rounded-2xl">
                         <div class="flex justify-between mb-3">
-                            <span class="font-bold text-white">${data.customerName}</span>
+                            <span class="font-bold text-white">${d.customerName}</span>
                             <span class="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded">Credit</span>
                         </div>
                         <div class="text-xs text-neutral-400 space-y-1.5 border-b border-neutral-800 pb-3 mb-3">
-                            <p><i class="fa-solid fa-box mr-2"></i> ${data.quantity} Jars | Empty: ${data.emptyJarsReceived || 0}</p>
-                            <p><i class="fa-solid fa-phone mr-2"></i> ${data.mobileNumber || 'N/A'}</p>
-                            <p><i class="fa-solid fa-calendar mr-2"></i> ${data.completedAt?.split('T')[0] || 'N/A'}</p>
+                            <p><i class="fa-solid fa-box mr-2"></i> ${d.quantity} Jars | Empty: ${d.emptyJarsReceived || 0}</p>
+                            <p><i class="fa-solid fa-phone mr-2"></i> ${d.mobileNumber || 'N/A'}</p>
+                            <p><i class="fa-solid fa-calendar mr-2"></i> ${d.completedAt?.split('T')[0] || 'N/A'}</p>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-sm font-bold text-amber-400">Due: ₹${data.pendingAmount}</span>
-                            <button onclick="window.markAsPaid('${docSnap.id}', ${data.pendingAmount})" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
-                                Mark as Paid
-                            </button>
+                            <span class="text-sm font-bold text-amber-400">Due: ₹${d.pendingAmount}</span>
+                            <button onclick="window.markAsPaid('${docSnap.id}', ${d.pendingAmount})" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">Mark as Paid</button>
                         </div>
-                    `;
-                    listContainer.appendChild(card);
+                    </div>`;
                 }
             });
+            document.getElementById('stat-daily-income').innerText = `₹${dInc}`;
+            document.getElementById('stat-monthly-income').innerText = `₹${mInc}`;
+            document.getElementById('stat-daily-delivered').innerText = dDel;
+            document.getElementById('stat-daily-received').innerText = dRec;
+            document.getElementById('volume-bar').style.width = Math.min((dDel / 168) * 100, 100) + "%";
+            document.getElementById('volume-text').innerText = `${dDel} / 168 Jars`;
+        });
 
-            // Update UI
-            document.getElementById('stat-daily-income').innerText = `₹${dailyInc}`;
-            document.getElementById('stat-monthly-income').innerText = `₹${monthlyInc}`;
-            document.getElementById('stat-daily-delivered').innerText = dailyDel;
-            document.getElementById('stat-daily-received').innerText = dailyRec;
-            
-            const percent = Math.min((dailyDel / 168) * 100, 100);
-            document.getElementById('volume-bar').style.width = percent + "%";
-            document.getElementById('volume-text').innerText = `${dailyDel} / 168 Jars`;
-
-            if (!found) {
-                listContainer.innerHTML = '<div class="text-center text-neutral-500 py-10">No pending payments! 🎉</div>';
-            }
+        // 2. Expense Listener
+        onSnapshot(collection(db, "expenses"), (snap) => {
+            let dExp = 0, mExp = 0;
+            const today = new Date().toISOString().split('T')[0];
+            const month = new Date().toISOString().substring(0, 7);
+            snap.forEach(doc => {
+                const d = doc.data();
+                if(!d.timestamp) return;
+                const dt = d.timestamp.toDate().toISOString().split('T')[0];
+                const mon = d.timestamp.toDate().toISOString().substring(0, 7);
+                if(dt === today) dExp += d.amount;
+                if(mon === month) mExp += d.amount;
+            });
+            document.getElementById('stat-daily-expense').innerText = `₹${dExp}`;
+            document.getElementById('stat-monthly-expense').innerText = `₹${mExp}`;
         });
 
         window.markAsPaid = async (id, amount) => {
-            if(confirm("Confirm: Payment received for this order?")) {
-                try {
-                    await updateDoc(doc(db, "aquapure_orders", id), {
-                        paymentStatus: 'Paid',
-                        paidAmount: amount,
-                        pendingAmount: 0
-                    });
-                    alert("Payment updated successfully!");
-                } catch (e) {
-                    alert("Error updating payment.");
-                }
+            if(confirm("Confirm: Payment received?")) {
+                await updateDoc(doc(db, "aquapure_orders", id), { paymentStatus: 'Paid', paidAmount: amount, pendingAmount: 0 });
             }
         };
     </script>
