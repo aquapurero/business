@@ -426,18 +426,12 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
                 emptyJarsReceived: emptyReceived // Ye field database mein save hogi
             });
             
-            // 1. Start Delivery Function
-window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
-    if(confirm(`Start delivery for ${custName}?`)) {
-        try {
-            await updateDoc(doc(db, "aquapure_orders", docId), { status: 'Out for Delivery' });
-        } catch (err) { alert("Failed to start delivery."); }
-    }
-};
+            // ... baaki ka code ...
 
-// 2. Empty Jars Selector
+// Naya function yahan add karein
 window.setEmptyVal = function(id, val) {
     document.getElementById(`manual-empty-${id}`).value = val;
+    // UI Feedback: Button ko highlight karne ke liye
     const container = document.getElementById(`empty-selector-${id}`);
     if (container) {
         container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
@@ -445,61 +439,45 @@ window.setEmptyVal = function(id, val) {
     }
 };
 
-// 3. Counter Adjustment
+// Pehle se maujood function
 window.adjustJarCounter = function(id, delta, price, type) {
-    const input = document.getElementById(`manual-${type}-${id}`);
-    if(input) {
-        let val = parseInt(input.value) || 0;
-        val += delta;
-        if(val < 0) val = 0;
-        input.value = val;
-    }
+    // ... aapka existing code ...
 };
 
-// 4. Final Delivery Submission
+// Pehle se maujood function
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
-    const qtyInput = document.getElementById(`manual-qty-${docId}`);
-    const emptyInput = document.getElementById(`manual-empty-${docId}`);
-    
-    const deliveredQty = parseInt(qtyInput.value) || 0;
-    const emptyReceived = parseInt(emptyInput.value) || 0;
+    // ... aapka existing code ...
+};
 
-    if(confirm(`Confirm: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
-        try {
-            await updateDoc(doc(db, "aquapure_orders", docId), {
-                status: 'progressing well',
-                quantity: deliveredQty,
-                emptyJarsReceived: emptyReceived
-            });
-            
+// ... baaki ka code ...
+
+
+            // Commission update
             const walletProfileRef = doc(db, "riders", riderMobileId);
             await updateDoc(walletProfileRef, {
                 walletBalance: increment(deliveredQty * commRate)
             });
-            alert("Delivery Updated!");
         } catch (err) {
             console.error(err);
-            alert("Database Error!");
+            alert("Database error: Could not update.");
         }
     }
 };
 
-// 5. UI Helpers
-function updateMetricsUI(earnings, totalJars) {
-    let totalDisplayEarnings = earnings;
-    if (isPunchedInToday) totalDisplayEarnings += 250; 
-    document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
-    document.getElementById('rider-jars').innerText = totalJars;
-}
 
-window.processLogout = function() {
-    if(confirm("Are you sure you want to log out?")) {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-};
+        function updateMetricsUI(earnings, totalJars) {
+            let totalDisplayEarnings = earnings;
+            if (isPunchedInToday) totalDisplayEarnings += 250; 
+            document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
+            document.getElementById('rider-jars').innerText = totalJars;
+        }
 
-
+        window.processLogout = function() {
+            if(confirm("Are you sure you want to log out?")) {
+                localStorage.clear();
+                window.location.href = "index.html";
+            }
+        };
     </script>
 </body>
 </html>
