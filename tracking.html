@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Payments | AquaPure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>body { background-color: #000; color: #f5f5f7; font-family: sans-serif; }</style>
+</head>
+<body class="p-4 pb-12">
+    <div class="max-w-md mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl font-bold">Pending Payments</h1>
+            <a href="live.html" class="text-xs text-neutral-400 bg-neutral-900 px-3 py-1 rounded-lg">Back to Live</a>
+        </div>
+        
+        <div id="pending-list" class="space-y-4">
+            <div class="text-center text-neutral-500 py-10">Loading pending data...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const listContainer = document.getElementById('pending-list');
+
+        // Sabhi orders fetch kar rahe hain jo deliver ho chuke hain (progressing well)
+        const q = query(collection(db, "aquapure_orders"), where("status", "==", "progressing well"));
+
+        onSnapshot(q, (snapshot) => {
+            listContainer.innerHTML = '';
+            let found = false;
+
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // Sirf wahi dikhao jahan pendingAmount > 0 hai
+                if (data.pendingAmount > 0) {
+                    found = true;
+                    const card = document.createElement('div');
+                    card.className = "bg-neutral-900 border border-neutral-800 p-4 rounded-2xl";
+                    card.innerHTML = `
+                        <div class="flex justify-between mb-3">
+                            <span class="font-bold text-white">${data.customerName}</span>
+                            <span class="text-[10px] bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded">Credit</span>
+                        </div>
+                        <div class="text-xs text-neutral-400 space-y-1.5 border-b border-neutral-800 pb-3 mb-3">
+                            <p><i class="fa-solid fa-box mr-2"></i> ${data.quantity} Jars | Empty: ${data.emptyJarsReceived || 0}</p>
+                            <p><i class="fa-solid fa-phone mr-2"></i> ${data.mobileNumber || 'N/A'}</p>
+                            <p><i class="fa-solid fa-calendar mr-2"></i> ${data.completedAt?.split('T')[0] || 'N/A'}</p>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-amber-400">Due: ₹${data.pendingAmount}</span>
+                            <button onclick="window.markAsPaid('${docSnap.id}', ${data.pendingAmount})" class="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl">
+                                Mark as Paid
+                            </button>
+                        </div>
+                    `;
+                    listContainer.appendChild(card);
+                }
+            });
+
+            if (!found) {
+                listContainer.innerHTML = '<div class="text-center text-neutral-500 py-10">No pending payments! 🎉</div>';
+            }
+        });
+
+        window.markAsPaid = async (id, amount) => {
+            if(confirm("Confirm: Payment received for this order?")) {
+                try {
+                    await updateDoc(doc(db, "aquapure_orders", id), {
+                        paymentStatus: 'Paid',
+                        paidAmount: amount, // Poora amount paid mark kar rahe hain
+                        pendingAmount: 0
+                    });
+                    alert("Payment updated successfully!");
+                } catch (e) {
+                    alert("Error updating payment.");
+                }
+            }
+        };
+    </script>
+</body>
+</html>
