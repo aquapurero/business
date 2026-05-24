@@ -424,27 +424,7 @@ window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
 };
 
 
-// 1. Separate function for setting empty value (Outside)
-window.setEmptyVal = async function(docId, val) {
-    const inputField = document.getElementById(`manual-empty-${docId}`);
-    if (inputField) {
-        inputField.value = val;
-    }
-    
-    // UI Feedback
-    const container = document.getElementById(`empty-selector-${docId}`);
-    if (container) {
-        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
-        event.target.classList.add('bg-emerald-600', 'text-white');
-    }
-
-    // Optional: Agar real-time save karna hai toh yahan call karein
-    try {
-        await updateDoc(doc(db, "aquapure_orders", docId), { emptyJarsReceived: val });
-    } catch(e) { console.error(e); }
-};
-
-// 2. Updated Submission Logic
+// Submission Logic (Empty jars ko database mein bhejega)
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const qtyInput = document.getElementById(`manual-qty-${docId}`);
     const emptyInput = document.getElementById(`manual-empty-${docId}`);
@@ -452,33 +432,28 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const deliveredQty = parseInt(qtyInput.value) || 0;
     const emptyReceived = parseInt(emptyInput.value) || 0;
 
-    // Confirm box mein ab sahi value dikhegi
     if(confirm(`Confirm Delivery: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
         try {
             const orderDocRef = doc(db, "aquapure_orders", docId);
             
-            // Update status and values in Firebase
             await updateDoc(orderDocRef, {
                 status: 'progressing well',
                 quantity: deliveredQty,
-                emptyJarsReceived: emptyReceived
+                emptyJarsReceived: emptyReceived // Ye field database mein save hogi
             });
             
-            // Update Wallet
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, {
-                walletBalance: increment(deliveredQty * commRate)
-            });
-            
-            alert("Delivery Completed!");
-        } catch (err) {
-            console.error(err);
-            alert("Database error: Could not update.");
-        }
+            // ... baaki ka code ...
+
+// Naya function yahan add karein
+window.setEmptyVal = function(id, val) {
+    document.getElementById(`manual-empty-${id}`).value = val;
+    // UI Feedback: Button ko highlight karne ke liye
+    const container = document.getElementById(`empty-selector-${id}`);
+    if (container) {
+        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
+        event.target.classList.add('bg-emerald-600', 'text-white');
     }
 };
-
-
 
 
 
