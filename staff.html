@@ -424,7 +424,25 @@ window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
 };
 
 
-// Submission Logic (Empty jars ko database mein bhejega)
+// --- Yahan se naya code paste karein ---
+
+// 1. Empty Jar select karne ka function (ALAG HAI)
+window.setEmptyVal = function(id, val) {
+    const inputField = document.getElementById(`manual-empty-${id}`);
+    if (inputField) {
+        inputField.value = val;
+    }
+    
+    // UI Highlight feedback
+    const container = document.getElementById(`empty-selector-${id}`);
+    if (container) {
+        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
+        // Event target use karne ke bajaye specific button ko highlight kar rahe hain
+        event.target.classList.add('bg-emerald-600', 'text-white');
+    }
+};
+
+// 2. Final Delivery submit karne ka function (ALAG HAI)
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const qtyInput = document.getElementById(`manual-qty-${docId}`);
     const emptyInput = document.getElementById(`manual-empty-${docId}`);
@@ -436,24 +454,28 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
         try {
             const orderDocRef = doc(db, "aquapure_orders", docId);
             
+            // Firebase update
             await updateDoc(orderDocRef, {
                 status: 'progressing well',
                 quantity: deliveredQty,
-                emptyJarsReceived: emptyReceived // Ye field database mein save hogi
+                emptyJarsReceived: emptyReceived
             });
             
-            // ... baaki ka code ...
-
-// Naya function yahan add karein
-window.setEmptyVal = function(id, val) {
-    document.getElementById(`manual-empty-${id}`).value = val;
-    // UI Feedback: Button ko highlight karne ke liye
-    const container = document.getElementById(`empty-selector-${id}`);
-    if (container) {
-        container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
-        event.target.classList.add('bg-emerald-600', 'text-white');
+            // Commission update
+            const walletProfileRef = doc(db, "riders", riderMobileId);
+            await updateDoc(walletProfileRef, {
+                walletBalance: increment(deliveredQty * commRate)
+            });
+            
+            alert("Delivery Completed!");
+        } catch (err) {
+            console.error(err);
+            alert("Database error: Could not update.");
+        }
     }
 };
+// --- Yahan tak paste karein ---
+
 
 
 
