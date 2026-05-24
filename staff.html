@@ -428,10 +428,10 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
             
             // ... baaki ka code ...
 
-// Naya function yahan add karein
+// --- Yahan se replace karein ---
+
 window.setEmptyVal = function(id, val) {
     document.getElementById(`manual-empty-${id}`).value = val;
-    // UI Feedback: Button ko highlight karne ke liye
     const container = document.getElementById(`empty-selector-${id}`);
     if (container) {
         container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
@@ -439,30 +439,46 @@ window.setEmptyVal = function(id, val) {
     }
 };
 
-// Pehle se maujood function
 window.adjustJarCounter = function(id, delta, price, type) {
-    // ... aapka existing code ...
+    const input = document.getElementById(`manual-${type}-${id}`);
+    if(input) {
+        let val = parseInt(input.value) || 0;
+        val += delta;
+        if(val < 0) val = 0;
+        input.value = val;
+    }
 };
 
-// Pehle se maujood function
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
-    // ... aapka existing code ...
-};
+    const qtyInput = document.getElementById(`manual-qty-${docId}`);
+    const emptyInput = document.getElementById(`manual-empty-${docId}`);
+    
+    const deliveredQty = parseInt(qtyInput.value) || 0;
+    const emptyReceived = parseInt(emptyInput.value) || 0;
 
-// ... baaki ka code ...
-
-
-            // Commission update
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, {
+    if(confirm(`Confirm Delivery: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
+        try {
+            // Update order
+            await updateDoc(doc(db, "aquapure_orders", docId), {
+                status: 'progressing well',
+                quantity: deliveredQty,
+                emptyJarsReceived: emptyReceived
+            });
+            
+            // Update rider wallet
+            await updateDoc(doc(db, "riders", riderMobileId), {
                 walletBalance: increment(deliveredQty * commRate)
             });
+            
+            alert("Delivery Updated!");
         } catch (err) {
             console.error(err);
-            alert("Database error: Could not update.");
+            alert("Database Error!");
         }
     }
 };
+
+// --- Yahan tak replace karein ---
 
 
         function updateMetricsUI(earnings, totalJars) {
