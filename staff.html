@@ -426,10 +426,18 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
                 emptyJarsReceived: emptyReceived // Ye field database mein save hogi
             });
             
-            // ... baaki ka code ...
+            // --- YAHAN SE REPLACE KAREIN (Script Tag ke andar) ---
 
-// --- Yahan se replace karein ---
+// 1. Start Delivery Function (Jo pehle missing tha)
+window.handleStartDelivery = async function(docId, custName, mobile, orderId) {
+    if(confirm(`Start delivery for ${custName}?`)) {
+        try {
+            await updateDoc(doc(db, "aquapure_orders", docId), { status: 'Out for Delivery' });
+        } catch (err) { alert("Failed to start delivery."); }
+    }
+};
 
+// 2. Empty Jars Selector
 window.setEmptyVal = function(id, val) {
     document.getElementById(`manual-empty-${id}`).value = val;
     const container = document.getElementById(`empty-selector-${id}`);
@@ -439,6 +447,7 @@ window.setEmptyVal = function(id, val) {
     }
 };
 
+// 3. Counter Adjustment
 window.adjustJarCounter = function(id, delta, price, type) {
     const input = document.getElementById(`manual-${type}-${id}`);
     if(input) {
@@ -449,6 +458,7 @@ window.adjustJarCounter = function(id, delta, price, type) {
     }
 };
 
+// 4. Final Delivery Submission
 window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const qtyInput = document.getElementById(`manual-qty-${docId}`);
     const emptyInput = document.getElementById(`manual-empty-${docId}`);
@@ -456,20 +466,18 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     const deliveredQty = parseInt(qtyInput.value) || 0;
     const emptyReceived = parseInt(emptyInput.value) || 0;
 
-    if(confirm(`Confirm Delivery: ${deliveredQty} Jars Delivered, ${emptyReceived} Empty Jars Received?`)) {
+    if(confirm(`Confirm: ${deliveredQty} Deliver, ${emptyReceived} Empty Jars?`)) {
         try {
-            // Update order
             await updateDoc(doc(db, "aquapure_orders", docId), {
                 status: 'progressing well',
                 quantity: deliveredQty,
                 emptyJarsReceived: emptyReceived
             });
             
-            // Update rider wallet
-            await updateDoc(doc(db, "riders", riderMobileId), {
+            const walletProfileRef = doc(db, "riders", riderMobileId);
+            await updateDoc(walletProfileRef, {
                 walletBalance: increment(deliveredQty * commRate)
             });
-            
             alert("Delivery Updated!");
         } catch (err) {
             console.error(err);
@@ -478,22 +486,23 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
     }
 };
 
-// --- Yahan tak replace karein ---
+// 5. UI Helpers
+function updateMetricsUI(earnings, totalJars) {
+    let totalDisplayEarnings = earnings;
+    if (isPunchedInToday) totalDisplayEarnings += 250; 
+    document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
+    document.getElementById('rider-jars').innerText = totalJars;
+}
 
+window.processLogout = function() {
+    if(confirm("Are you sure you want to log out?")) {
+        localStorage.clear();
+        window.location.href = "index.html";
+    }
+};
 
-        function updateMetricsUI(earnings, totalJars) {
-            let totalDisplayEarnings = earnings;
-            if (isPunchedInToday) totalDisplayEarnings += 250; 
-            document.getElementById('rider-earnings').innerText = `₹${Number(totalDisplayEarnings).toFixed(2)}`;
-            document.getElementById('rider-jars').innerText = totalJars;
-        }
+// --- YAHAN TAK REPLACE KAREIN ---
 
-        window.processLogout = function() {
-            if(confirm("Are you sure you want to log out?")) {
-                localStorage.clear();
-                window.location.href = "index.html";
-            }
-        };
     </script>
 </body>
 </html>
