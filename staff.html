@@ -445,15 +445,33 @@ window.submitFinalDelivery = async function(docId, itemPrice, commRate) {
             // ... baaki ka code ...
 
 // Naya function yahan add karein
-window.setEmptyVal = function(id, val) {
-    document.getElementById(`manual-empty-${id}`).value = val;
-    // UI Feedback: Button ko highlight karne ke liye
-    const container = document.getElementById(`empty-selector-${id}`);
+window.setEmptyVal = async function(docId, val) {
+    // 1. Input field update karein
+    const inputField = document.getElementById(`manual-empty-${docId}`);
+    if (inputField) {
+        inputField.value = val;
+    }
+
+    // 2. UI Feedback (Button Highlight)
+    const container = document.getElementById(`empty-selector-${docId}`);
     if (container) {
         container.querySelectorAll('button').forEach(btn => btn.classList.remove('bg-emerald-600', 'text-white'));
         event.target.classList.add('bg-emerald-600', 'text-white');
     }
+
+    // 3. DATABASE UPDATE (Ye zaroori tha)
+    try {
+        const orderDocRef = doc(db, "aquapure_orders", docId);
+        await updateDoc(orderDocRef, {
+            emptyJarsReceived: val
+        });
+        console.log(`Empty jars updated to ${val} for order ${docId}`);
+    } catch (err) {
+        console.error("Firebase update failed: ", err);
+        alert("Empty Jars save nahi ho paye. Connection check karein.");
+    }
 };
+
 
 
 
