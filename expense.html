@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AquaPure | Expense Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background: #050505; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -14,9 +15,17 @@
 </head>
 <body class="p-6">
     <div class="max-w-md mx-auto space-y-8">
-        <header class="text-center pt-4">
-            <h1 class="text-2xl font-bold tracking-tight">AquaPure</h1>
-            <p class="text-neutral-500 text-xs uppercase tracking-[0.2em]">Expense Tracker</p>
+        <header class="text-center pt-4 flex justify-between items-center">
+            <div class="flex-1"></div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">AquaPure</h1>
+                <p class="text-neutral-500 text-xs uppercase tracking-[0.2em]">Expense Tracker</p>
+            </div>
+            <div class="flex-1 flex justify-end">
+                <button onclick="window.resetAllExpenses()" class="text-neutral-600 hover:text-rose-500 transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
         </header>
         
         <div class="grid grid-cols-2 gap-4">
@@ -56,7 +65,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const db = getFirestore(initializeApp({
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -66,6 +75,14 @@
             messagingSenderId: "8661923251",
             appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
         }));
+
+        // Reset Function
+        window.resetAllExpenses = async () => {
+            if(!confirm("⚠️ Are you sure you want to delete ALL expense records?")) return;
+            const snap = await getDocs(collection(db, "expenses"));
+            snap.forEach(async (d) => await deleteDoc(d.ref));
+            alert("All records cleared.");
+        };
 
         window.deleteEntry = async (id) => { if(confirm('Remove this expense?')) await deleteDoc(doc(db, "expenses", id)); };
 
