@@ -200,82 +200,42 @@
         });
 
         window.triggerPunchIn = async function() {
-    // 1. Check if the rider has already punched in today
+    // 1. Check karo ki kya aaj pehle se Punch In ho chuka hai?
     if (isPunchedInToday) {
-        alert("You have already punched in for today!");
+        alert("Aap pehle hi Punch In kar chuke hain!");
         return;
     }
 
-    // 2. Check if geolocation is supported by the browser
-    if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser. Please enable location access.");
-        return;
-    }
-
-    alert("Verifying location, please wait...");
-
-    navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
+    try {
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        // Target Location (Office Coordinates)
-        const targetLat = 21.928129;
-        const targetLon = 86.728984;
+        // 2. Attendance Record
+        await setDoc(attDocRef, {
+            mobile: riderMobileId,
+            rider: riderDisplayName,
+            date: todayStr,
+            punchIn: timeStr,
+            punchOut: null,
+            allowanceGiven: true // Ye flag add kar rahe hain taaki dobara paise na milein
+        }, { merge: true });
 
-        // Haversine formula to calculate distance in meters
-        const getDistance = (lat1, lon1, lat2, lon2) => {
-            const R = 6371e3; // Earth radius in meters
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        };
+        // 3. Rider Wallet Update
+        const walletProfileRef = doc(db, "riders", riderMobileId);
+        await updateDoc(walletProfileRef, { walletBalance: increment(250) });
 
-        const distance = getDistance(lat, lon, targetLat, targetLon);
+        // 4. Automatic Expense Log
+        await addDoc(collection(db, "expenses"), {
+            amount: 250,
+            category: "Punch-in Allowance (" + riderDisplayName + ")",
+            timestamp: serverTimestamp()
+        });
 
-        // 3. Verify if the distance is within 100 meters
-        if (distance > 100) {
-            alert(`Punch In Failed: You are outside the office premises (${Math.round(distance)} meters away).`);
-            return;
-        }
-
-        // 4. Proceed with Punch In if within range
-        try {
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            await setDoc(attDocRef, {
-                mobile: riderMobileId,
-                rider: riderDisplayName,
-                date: todayStr,
-                punchIn: timeStr,
-                punchOut: null,
-                allowanceGiven: true
-            }, { merge: true });
-
-            // Update Rider Wallet
-            const walletProfileRef = doc(db, "riders", riderMobileId);
-            await updateDoc(walletProfileRef, { walletBalance: increment(250) });
-
-            // Log the Expense
-            await addDoc(collection(db, "expenses"), {
-                amount: 250,
-                category: "Punch-in Allowance (" + riderDisplayName + ")",
-                timestamp: serverTimestamp()
-            });
-
-            alert("Punch In Successful! Location verified.");
-        } catch (err) {
-            console.error("Critical error during Punch In:", err);
-            alert("Punch In failed due to a system error: " + err.message);
-        }
-
-    }, (error) => {
-        alert("Location access is required to perform Punch In. Please allow permissions.");
-    }, { enableHighAccuracy: true });
+        alert("Punch In Successful! ₹250 added to Wallet and logged as Expense.");
+    } catch (err) {
+        console.error("Critical error in Punch In:", err);
+        alert("Punch In failed: " + err.message);
+    }
 };
-
 
 
 
