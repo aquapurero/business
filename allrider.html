@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPure | User Directory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #000; color: #f5f5f7; font-family: sans-serif; }
+        .apple-blur { background: rgba(22, 22, 23, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-3xl mx-auto space-y-6">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold">Registered Users (Login List)</h1>
+            <a href="index.html" class="text-xs text-neutral-400 bg-neutral-900 px-4 py-2 rounded-xl">Back to Login</a>
+        </div>
+
+        <div id="user-list" class="grid gap-3">
+            <div class="text-center text-neutral-500 py-10">Fetching users...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const db = getFirestore(initializeApp({
+            apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
+            authDomain: "aquapure-1a3ce.firebaseapp.com",
+            projectId: "aquapure-1a3ce",
+            storageBucket: "aquapure-1a3ce.firebasestorage.app",
+            messagingSenderId: "8661923251",
+            appId: "1:8661923251:web:0cc44e9058a0d4859987c6"
+        }));
+
+        const listDiv = document.getElementById('user-list');
+
+        window.deleteUser = async (mobile) => {
+            if(confirm(`⚠️ Are you sure you want to delete user: ${mobile}?`)) {
+                await deleteDoc(doc(db, "aquapure_users", mobile));
+                // Optional: Rider collection se bhi delete karna ho to:
+                // await deleteDoc(doc(db, "riders", mobile));
+            }
+        };
+
+        onSnapshot(collection(db, "aquapure_users"), (snap) => {
+            listDiv.innerHTML = '';
+            snap.forEach((doc) => {
+                const u = doc.data();
+                listDiv.innerHTML += `
+                    <div class="apple-blur p-4 rounded-2xl flex justify-between items-center">
+                        <div class="flex items-center gap-4">
+                            ${u.avatar ? `<img src="${u.avatar}" class="w-10 h-10 rounded-full object-cover">` : '<div class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center"><i class="fa-solid fa-user"></i></div>'}
+                            <div>
+                                <h3 class="font-bold">${u.displayName || 'No Name'}</h3>
+                                <p class="text-[11px] text-neutral-400 font-mono">${u.mobile}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-[10px] uppercase font-bold text-blue-400 px-2 py-1 rounded bg-blue-500/10">${u.role || 'Staff'}</span>
+                            <button onclick="window.deleteUser('${u.mobile}')" class="text-rose-500 hover:text-rose-400 p-2">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
