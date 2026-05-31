@@ -145,9 +145,33 @@
             </div>
             
         </div>
-
     </main>
 
+    <div id="riderModalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="apple-blur w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-neutral-800 space-y-4">
+            <div class="flex items-center space-x-2.5 text-emerald-400">
+                <i class="fa-solid fa-users-gear text-lg"></i>
+                <h3 class="text-base font-bold text-white tracking-tight">Bulk Dispatch Allocation</h3>
+            </div>
+            <p class="text-xs text-neutral-400 leading-relaxed">System will auto-generate dispatches for all regular clients. Select assigned staff node below:</p>
+            
+            <div class="space-y-1.5">
+                <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Available Delivery Staff</label>
+                <select id="modalRiderDropdown" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-all">
+                    <option value="" disabled selected>Loading staff roster data...</option>
+                </select>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <button id="closeModalBtn" class="flex-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 py-2.5 rounded-xl text-xs font-semibold transition-all">
+                    Cancel
+                </button>
+                <button id="confirmBulkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/10">
+                    Confirm Dispatch
+                </button>
+            </div>
+        </div>
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
         import { 
@@ -182,11 +206,72 @@
         const searchBar = document.getElementById('searchBar');
         const bulkSendBtn = document.getElementById('bulkSendBtn');
 
-        // FIXED Bulk Send Logic
+        const riderModalOverlay = document.getElementById('riderModalOverlay');
+        const modalRiderDropdown = document.getElementById('modalRiderDropdown');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const confirmBulkBtn = document.getElementById('confirmBulkBtn');
+
+        let dynamicRidersList = [];
+
+        // FIXED: Multi-field fallback matching algorithm for rider name keys
+        async function loadActiveStaffRoster() {
+            try {
+                const ridersSnapshot = await getDocs(collection(db, "riders"));
+                modalRiderDropdown.innerHTML = '<option value="" disabled selected>Choose Staff Node...</option>';
+                dynamicRidersList = [];
+
+                ridersSnapshot.forEach((doc) => {
+                    const rData = doc.data();
+                    
+                    // Phone / Mobile identifiers mapping
+                    const phoneId = rData.mobile || rData.phone || rData.riderMobile || doc.id;
+                    
+                    // SMART FIELD FALLBACK: Alag-alag possible column keys automatically match honge
+                    const nameDisplay = rData.name || rData.Name || rData.riderName || rData.rider || rData.displayName || "Staff Member";
+                    
+                    dynamicRidersList.push({ id: phoneId, name: nameDisplay });
+
+                    const optionElement = document.createElement('option');
+                    optionElement.value = phoneId; 
+                    optionElement.textContent = `${nameDisplay} (${phoneId})`;
+                    modalRiderDropdown.appendChild(optionElement);
+                });
+
+                if(dynamicRidersList.length === 0) {
+                    modalRiderDropdown.innerHTML = '<option value="" disabled>No active staff logs discovered</option>';
+                }
+            } catch (error) {
+                console.error("Roster retrieval error:", error);
+                modalRiderDropdown.innerHTML = '<option value="" disabled>Error reading database</option>';
+            }
+        }
+
         bulkSendBtn.onclick = async () => {
-            const rider = prompt("Enter Rider Name for assignment:");
-            if (!rider) return;
-            if(!confirm(`Assign all 'Regular' customers to ${rider}?`)) return;
+            await loadActiveStaffRoster();
+            riderModalOverlay.classList.remove('hidden');
+        };
+
+        closeModalBtn.onclick = () => {
+            riderModalOverlay.classList.add('hidden');
+        };
+
+        confirmBulkBtn.onclick = async () => {
+            const selectedRiderMobile = modalRiderDropdown.value;
+            
+            if(!selectedRiderMobile) {
+                alert("Please select a delivery staff from the dropdown list first.");
+                return;
+            }
+
+            const riderObject = dynamicRidersList.find(r => r.id === selectedRiderMobile);
+            const targetRiderName = riderObject ? riderObject.name : "Rider";
+
+            const combinedRiderSignatureString = `${selectedRiderMobile} (${targetRiderName})`;
+
+            if(!confirm(`Are you absolutely sure you want to assign all 'Regular' accounts to ${targetRiderName}?`)) return;
+
+            confirmBulkBtn.disabled = true;
+            confirmBulkBtn.innerText = "Dispatching...";
 
             try {
                 const q = query(collection(db, "customers"), where("deliveryType", "==", "Regular"));
@@ -194,26 +279,33 @@
                 
                 const promises = querySnapshot.docs.map(item => {
                     const data = item.data();
-                    
-                    // Naya document reference generator automatic order ID nikalne ke liye
                     const orderDocRef = doc(collection(db, "aquapure_orders"));
                     
                     return addDoc(collection(db, "aquapure_orders"), {
-                        orderId: orderDocRef.id, // Generate hui unique Order ID
+                        orderId: orderDocRef.id,
                         customerName: data.name || "N/A",
-                        phone: data.phone || "No Number", // Customer ka fixed mobile number
+                        phone: data.phone || "No Number", 
                         address: data.address || "No Address",
                         quantity: parseInt(data.defaultQty) || 1,
-                        rider: rider,
+                        
+                        rider: combinedRiderSignatureString,
+                        riderMobile: selectedRiderMobile,
+                        assignedRider: selectedRiderMobile,
+
                         status: "Pending",
                         timestamp: serverTimestamp()
                     });
                 });
+
                 await Promise.all(promises);
-                alert("Bulk dispatch successful!");
+                alert(`Bulk dispatch successfully loaded onto ${targetRiderName}'s active screen pipeline.`);
+                riderModalOverlay.classList.add('hidden');
             } catch (err) {
-                console.error("Bulk Send Error: ", err);
-                alert("Bulk dispatch failed.");
+                console.error("Bulk Processing Failure: ", err);
+                alert("Bulk delivery sync failed.");
+            } finally {
+                confirmBulkBtn.disabled = false;
+                confirmBulkBtn.innerText = "Confirm Dispatch";
             }
         };
 
