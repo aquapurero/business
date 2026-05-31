@@ -56,10 +56,10 @@
                 <span>Customer DB</span>
             </a>
             
-               <a href="tracking.html" class="flex items-center space-x-2 bg-neutral-900 hover:bg-amber-900/20 border border-neutral-800 hover:border-amber-700 px-4 py-2 rounded-xl transition-all text-neutral-300 hover:text-amber-400 text-xs font-medium">
-            <i class="fa-solid fa-receipt text-amber-400"></i>
-            <span>Pending Pay</span>
-        </a>
+            <a href="tracking.html" class="flex items-center space-x-2 bg-neutral-900 hover:bg-amber-900/20 border border-neutral-800 hover:border-amber-700 px-4 py-2 rounded-xl transition-all text-neutral-300 hover:text-amber-400 text-xs font-medium">
+                <i class="fa-solid fa-receipt text-amber-400"></i>
+                <span>Pending Pay</span>
+            </a>
 
             <div class="text-right hidden md:block">
                 <p class="text-sm font-medium text-white">Control Center</p>
@@ -141,7 +141,12 @@
                         <h3 class="text-lg font-semibold text-white">Live Operations Stream</h3>
                         <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-3">
+                        <!-- Modern Apple Style Clear All Data Button -->
+                        <button onclick="window.clearAllOperationsData()" class="bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 hover:border-rose-500 text-rose-400 hover:text-white px-3 py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center space-x-1.5 shadow-md">
+                            <i class="fa-solid fa-dumpster text-[10px]"></i>
+                            <span>Clear Stream</span>
+                        </button>
                         <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span class="text-xs font-medium tracking-wide text-neutral-400 uppercase">Live Monitor</span>
                     </div>
@@ -150,19 +155,19 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                           <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
-    <th class="px-6 py-4 font-medium">Order ID</th>
-    <th class="px-6 py-4 font-medium">Customer Details</th>
-    <th class="px-6 py-4 font-medium">Quantity / Price</th>
-    <th class="px-6 py-4 font-medium">Empty Returns</th> <th class="px-6 py-4 font-medium">Assigned Rider</th>
-    <th class="px-6 py-4 font-medium">Live Status</th>
-    <th class="px-6 py-4 font-medium text-center">Action</th>
-</tr>
-
+                            <tr class="bg-neutral-900/50 text-neutral-400 text-xs uppercase tracking-wider border-b border-neutral-800">
+                                <th class="px-6 py-4 font-medium">Order ID</th>
+                                <th class="px-6 py-4 font-medium">Customer Details</th>
+                                <th class="px-6 py-4 font-medium">Quantity / Price</th>
+                                <th class="px-6 py-4 font-medium">Empty Returns</th> 
+                                <th class="px-6 py-4 font-medium">Assigned Rider</th>
+                                <th class="px-6 py-4 font-medium">Live Status</th>
+                                <th class="px-6 py-4 font-medium text-center">Action</th>
+                            </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-800/60 text-sm" id="order-table-body">
                             <tr>
-                                <td colspan="6" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
+                                <td colspan="7" class="px-6 py-10 text-center text-neutral-500">Connecting to cloud stream...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -209,10 +214,9 @@
             </form>
         </div>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, deleteDoc, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAqCuaCTnFwPCbkczZo4-Ysjjpq9qLX1iY",
@@ -242,7 +246,6 @@
         const custNameInput = document.getElementById('custName');
         const dropdownPanel = document.getElementById('dropdownPanel');
 
-        // REAL-TIME DROPDOWN FETCH FROM CUSTOMERS COLLECTION WITH PRICING
         onSnapshot(query(customersRef, orderBy("name", "asc")), (snapshot) => {
             globalCustomerDirectory = [];
             globalCustomerPricingMap.clear();
@@ -312,7 +315,6 @@
             setTimeout(() => dropdownPanel.classList.add('hidden'), 200);
         });
 
-        // FORM SUBMISSION ENGINE (Quantity Input Field Completely Dropped)
         document.getElementById('dispatchForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
@@ -333,7 +335,7 @@
                     customerName: document.getElementById('custName').value.trim(),
                     mobileNumber: document.getElementById('custMobile').value.trim(),
                     address: document.getElementById('custAddress').value.trim(),
-                    quantity: 0, // Set to 0 initially, staff will decide on their panel
+                    quantity: 0, 
                     status: "Pending",
                     timestamp: serverTimestamp(),
                     
@@ -356,6 +358,24 @@
                     await deleteDoc(doc(db, "aquapure_orders", docId));
                 } catch (error) {
                     console.error("Deletion failure:", error);
+                }
+            }
+        };
+
+        // NEW FEATURE: Clear All Logs from the Stream Collection safely
+        window.clearAllOperationsData = async function() {
+            if(confirm("🚨 CRITICAL ACTION: Are you sure you want to clear ALL dispatch orders from the current live view? This action cannot be undone.")) {
+                try {
+                    const querySnapshot = await getDocs(ordersRef);
+                    const deletePromises = [];
+                    querySnapshot.forEach((docSnap) => {
+                        deletePromises.push(deleteDoc(doc(db, "aquapure_orders", docSnap.id)));
+                    });
+                    await Promise.all(deletePromises);
+                    alert("Live operations collection cleared successfully.");
+                } catch (err) {
+                    console.error("Error purging stream data: ", err);
+                    alert("Failed to clear stream data.");
                 }
             }
         };
@@ -507,7 +527,7 @@
             
             let total = 0, active = 0, completed = 0, pending = 0;
             if(snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-neutral-500">No active dispatches found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-neutral-500">No active dispatches found.</td></tr>`;
             }
 
             snapshot.forEach((doc) => {
@@ -517,7 +537,7 @@
 
                 const jars = parseInt(data.quantity) || 0;
                 const custKey = data.customerName ? data.customerName.trim().toLowerCase() : '';
-                const currentCustJarPrice = globalCustomerPricingMap.get(custKey) || 30; // Customer DB se custom live price fetch karega
+                const currentCustJarPrice = globalCustomerPricingMap.get(custKey) || 30; 
                 const totalCharge = jars * currentCustJarPrice;
 
                 let statusBadge = '';
@@ -532,44 +552,42 @@
                     statusBadge = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"><i class="fa-solid fa-circle-check mr-1.5"></i>Delivered</span>`;
                 }
 
-                // Render condition checking if quantity is selected by staff or waiting
                 const quantityDisplay = jars > 0 ? `${jars} Jars` : `<span class="text-neutral-500 italic text-xs">Waiting for Rider...</span>`;
-                const pricingBreakdownDisplay = jars > 0 ? `₹${currentCustJarPrice} × ${jars}` : `Rate: ₹${currentCustJarPrice}/Jar`;
                 const totalBillDisplay = jars > 0 ? `Total: ₹${totalCharge}` : `Pending Total`;
+                const emptyReturned = data.emptyJarsReceived || 0; 
 
-                // loop ke andar data extract karein
-const emptyReturned = data.emptyJarsReceived || 0; 
+                // TRUNCATION LOGIC: Pure 'AQP-1234' se prefix hata kar short id string extract ki hai
+                let rawOrderId = data.orderId || 'N/A';
+                let shortOrderId = rawOrderId.includes('-') ? rawOrderId.split('-')[1] : rawOrderId;
 
-// row variable mein update
-const row = `
-    <tr class="hover:bg-neutral-900/30 transition-colors">
-        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${data.orderId || 'N/A'}</td>
-        <td class="px-6 py-4">
-            <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
-            <div class="text-xs text-neutral-400 mt-0.5">${data.mobileNumber || 'No Phone'}</div>
-        </td>
-        <td class="px-6 py-4">
-            <div class="font-medium text-neutral-200">${quantityDisplay}</div>
-            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">${totalBillDisplay}</div>
-        </td>
-        <td class="px-6 py-4">
-            <div class="flex items-center space-x-2">
-                <span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md text-xs font-bold font-mono border border-blue-500/20">
-                    ${emptyReturned} Jars
-                </span>
-            </div>
-        </td>
-        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
-        <td class="px-6 py-4">${statusBadge}</td>
-        <td class="px-6 py-4 text-center">
-            <button onclick="window.deleteOrderRecord('${docId}')" class="text-neutral-500 hover:text-rose-400 p-1.5 transition-colors">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        </td>
-    </tr>
-`;
-tbody.innerHTML += row;
-
+                const row = `
+                    <tr class="hover:bg-neutral-900/30 transition-colors">
+                        <td class="px-6 py-4 font-mono font-medium text-blue-400">#${shortOrderId}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
+                            <div class="text-xs text-neutral-400 mt-0.5">${data.mobileNumber || 'No Phone'}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-neutral-200">${quantityDisplay}</div>
+                            <div class="text-xs font-bold text-emerald-400 font-mono mt-0.5">${totalBillDisplay}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-md text-xs font-bold font-mono border border-blue-500/20">
+                                    ${emptyReturned} Jars
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-neutral-300 font-medium">${data.rider || 'Unassigned'}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="window.deleteOrderRecord('${docId}')" class="text-neutral-500 hover:text-rose-400 p-1.5 transition-colors">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
             });
 
             document.getElementById('stat-total').innerText = total;
