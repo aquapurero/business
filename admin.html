@@ -142,7 +142,6 @@
                         <p class="text-xs text-neutral-400">All columns sync automatically with active riders</p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <!-- Modern Apple Style Clear All Data Button -->
                         <button onclick="window.clearAllOperationsData()" class="bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 hover:border-rose-500 text-rose-400 hover:text-white px-3 py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center space-x-1.5 shadow-md">
                             <i class="fa-solid fa-dumpster text-[10px]"></i>
                             <span>Clear Stream</span>
@@ -197,7 +196,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Mobile Number</label>
-                    <input type="tel" id="custMobile" required pattern="[0-9]{10}" class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="10-digit mobile number">
+                    <input type="tel" id="custMobile" required class="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Mobile number">
                 </div>
                 <div>
                     <label class="block text-xs font-medium uppercase tracking-wider text-neutral-400 mb-1.5">Delivery Address</label>
@@ -254,7 +253,7 @@
                 if(data.name) {
                     const mappedData = {
                         customerName: data.name || '',
-                        mobileNumber: data.phone || '',
+                        mobileNumber: data.phone || data.mobileNumber || data.mobile || '',
                         address: data.address || '',
                         jarPrice: parseFloat(data.price) || parseFloat(data.jarPrice) || 30
                     };
@@ -362,7 +361,6 @@
             }
         };
 
-        // NEW FEATURE: Clear All Logs from the Stream Collection safely
         window.clearAllOperationsData = async function() {
             if(confirm("🚨 CRITICAL ACTION: Are you sure you want to clear ALL dispatch orders from the current live view? This action cannot be undone.")) {
                 try {
@@ -556,16 +554,19 @@
                 const totalBillDisplay = jars > 0 ? `Total: ₹${totalCharge}` : `Pending Total`;
                 const emptyReturned = data.emptyJarsReceived || 0; 
 
-                // TRUNCATION LOGIC: Pure 'AQP-1234' se prefix hata kar short id string extract ki hai
-                let rawOrderId = data.orderId || 'N/A';
-                let shortOrderId = rawOrderId.includes('-') ? rawOrderId.split('-')[1] : rawOrderId;
+                // FIX 1: ORDER ID SHORT FORM LOGIC (Uthega sirf pichle 4 digits, chahe format kuch bhi ho)
+                let rawIdString = String(data.orderId || '').trim();
+                let shortOrderId = rawIdString.length > 4 ? rawIdString.slice(-4) : rawIdString;
+
+                // FIX 2: CUSTOMER MOBILE CHECK (Sahi fallback lagaya hai data loading aur display dono par)
+                let finalCustomerMobile = data.mobileNumber || data.mobile || data.phone || 'No Phone';
 
                 const row = `
                     <tr class="hover:bg-neutral-900/30 transition-colors">
                         <td class="px-6 py-4 font-mono font-medium text-blue-400">#${shortOrderId}</td>
                         <td class="px-6 py-4">
                             <div class="font-medium text-white">${data.customerName || 'Unknown'}</div>
-                            <div class="text-xs text-neutral-400 mt-0.5">${data.mobileNumber || 'No Phone'}</div>
+                            <div class="text-xs text-neutral-400 mt-0.5">${finalCustomerMobile}</div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="font-medium text-neutral-200">${quantityDisplay}</div>
