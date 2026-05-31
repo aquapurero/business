@@ -182,7 +182,7 @@
         const searchBar = document.getElementById('searchBar');
         const bulkSendBtn = document.getElementById('bulkSendBtn');
 
-        // Bulk Send Logic
+        // FIXED Bulk Send Logic
         bulkSendBtn.onclick = async () => {
             const rider = prompt("Enter Rider Name for assignment:");
             if (!rider) return;
@@ -194,11 +194,16 @@
                 
                 const promises = querySnapshot.docs.map(item => {
                     const data = item.data();
+                    
+                    // Naya document reference generator automatic order ID nikalne ke liye
+                    const orderDocRef = doc(collection(db, "aquapure_orders"));
+                    
                     return addDoc(collection(db, "aquapure_orders"), {
-                        customerName: data.name,
-                        phone: data.phone,
-                        address: data.address,
-                        quantity: data.defaultQty,
+                        orderId: orderDocRef.id, // Generate hui unique Order ID
+                        customerName: data.name || "N/A",
+                        phone: data.phone || "No Number", // Customer ka fixed mobile number
+                        address: data.address || "No Address",
+                        quantity: parseInt(data.defaultQty) || 1,
                         rider: rider,
                         status: "Pending",
                         timestamp: serverTimestamp()
@@ -207,7 +212,7 @@
                 await Promise.all(promises);
                 alert("Bulk dispatch successful!");
             } catch (err) {
-                console.error(err);
+                console.error("Bulk Send Error: ", err);
                 alert("Bulk dispatch failed.");
             }
         };
