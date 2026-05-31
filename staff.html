@@ -271,7 +271,7 @@
                     const calculatedTotalBill = productVolume * dynamicJarPrice;
                     const currentOrderCommission = productVolume * dynamicCommRate;
 
-                    // Fixed multi-fallback configuration for bulk customer fields
+                    // Fixed: Combined fallback captures all common bulk dispatch phone naming conventions
                     const customerPhone = data.phone || data.mobileNumber || data.customerPhone || data.mobile || '';
 
                     if (data.status === 'progressing well') {
